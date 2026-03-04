@@ -2,9 +2,11 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -22,6 +24,24 @@ func CreateProfile(ctx context.Context, pool *pgxpool.Pool, userID, nickname str
 			return StudentProfile{}, ErrDuplicateProfile
 		}
 		return StudentProfile{}, fmt.Errorf("CreateProfile: %w", err)
+	}
+	return p, nil
+}
+
+// GetStudentProfileByID retrieves a student profile by its profile ID.
+func GetStudentProfileByID(ctx context.Context, pool *pgxpool.Pool, profileID string) (StudentProfile, error) {
+	var p StudentProfile
+	err := pool.QueryRow(ctx,
+		`SELECT id, user_id, nickname, avatar_id, total_stars, total_xp, play_mode, created_at
+		 FROM student_profiles
+		 WHERE id = $1`,
+		profileID,
+	).Scan(&p.ID, &p.UserID, &p.Nickname, &p.AvatarID, &p.TotalStars, &p.TotalXP, &p.PlayMode, &p.CreatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return StudentProfile{}, ErrNotFound
+		}
+		return StudentProfile{}, fmt.Errorf("GetStudentProfileByID: %w", err)
 	}
 	return p, nil
 }
