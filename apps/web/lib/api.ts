@@ -12,6 +12,19 @@ export interface APIError {
   message: string;
 }
 
+export interface WeeklySummary {
+  attention_score: number | null;
+  memory_score: number | null;
+  engagement_frequency: number;
+  coop_participation_rate: number | null;
+  avg_reaction_time_ms: number | null;
+  total_stars: number;
+  total_xp: number;
+  sessions_this_week: number;
+  snapshot_date: string;
+  message?: string;
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -116,5 +129,19 @@ export function updateProfile(data: {
   return request<Profile>("/api/profiles/me", {
     method: "PATCH",
     body: JSON.stringify(data),
+  });
+}
+
+export function getAnalyticsOverview(
+  profileId: string
+): Promise<WeeklySummary> {
+  return request<WeeklySummary>(
+    `/api/analytics/overview?profile_id=${encodeURIComponent(profileId)}`
+  );
+}
+
+export function logout(): Promise<{ message: string }> {
+  return request<{ message: string }>("/api/auth/logout", {
+    method: "POST",
   });
 }
