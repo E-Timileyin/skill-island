@@ -18,6 +18,9 @@ var ErrNotFound = errors.New("record not found")
 // ErrDuplicateEmail is returned when a user with the same email already exists.
 var ErrDuplicateEmail = errors.New("email already registered")
 
+// ErrDuplicateProfile is returned when a student profile already exists for a user.
+var ErrDuplicateProfile = errors.New("profile already exists for this user")
+
 // User represents a row in the users table.
 type User struct {
 	ID           string
@@ -36,6 +39,7 @@ type StudentProfile struct {
 	AvatarID   int
 	TotalStars int
 	TotalXP    int
+	PlayMode   string
 	CreatedAt  time.Time
 }
 
@@ -109,11 +113,11 @@ func UpdateLastLogin(ctx context.Context, pool *pgxpool.Pool, id string) error {
 func GetStudentProfileByUserID(ctx context.Context, pool *pgxpool.Pool, userID string) (StudentProfile, error) {
 	var p StudentProfile
 	err := pool.QueryRow(ctx,
-		`SELECT id, user_id, nickname, avatar_id, total_stars, total_xp, created_at
+		`SELECT id, user_id, nickname, avatar_id, total_stars, total_xp, play_mode, created_at
 		 FROM student_profiles
 		 WHERE user_id = $1`,
 		userID,
-	).Scan(&p.ID, &p.UserID, &p.Nickname, &p.AvatarID, &p.TotalStars, &p.TotalXP, &p.CreatedAt)
+	).Scan(&p.ID, &p.UserID, &p.Nickname, &p.AvatarID, &p.TotalStars, &p.TotalXP, &p.PlayMode, &p.CreatedAt)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return StudentProfile{}, ErrNotFound
