@@ -81,6 +81,8 @@ func (h *Handler) AnalyticsOverview(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		totalStars = profile.TotalStars
 		totalXP = profile.TotalXP
+	} else if !errors.Is(err, db.ErrNotFound) {
+		log.Printf("AnalyticsOverview: GetStudentProfileByID error: %v", err)
 	}
 
 	engagementFreq := 0

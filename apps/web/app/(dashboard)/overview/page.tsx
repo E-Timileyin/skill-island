@@ -10,6 +10,7 @@ export default function DashboardOverviewPage() {
   const { user, loading: authLoading } = useAuth();
   const [summary, setSummary] = useState<WeeklySummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -26,8 +27,8 @@ export default function DashboardOverviewPage() {
 
     getAnalyticsOverview(profileId)
       .then(setSummary)
-      .catch(() => {
-        // No data or error — summary stays null
+      .catch((err) => {
+        setError(err?.message || "Failed to load analytics data");
       })
       .finally(() => setIsLoading(false));
   }, [user, authLoading]);
@@ -51,6 +52,12 @@ export default function DashboardOverviewPage() {
         </h1>
         <ExportButton />
       </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       <ParentDashboard
         summary={summary}
