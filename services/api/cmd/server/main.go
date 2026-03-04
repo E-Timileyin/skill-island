@@ -68,6 +68,13 @@ func main() {
 	// WebSocket upgrade — JWT validated inside handler before upgrade.
 	r.Get("/ws/game", wsHandler.ServeWS)
 
+	r.Route("/api/profiles", func(r chi.Router) {
+		r.Use(auth.Middleware(cfg.JWTSecret))
+		r.Post("/", h.CreateProfile)
+		r.Get("/me", h.GetProfile)
+		r.Patch("/me", h.UpdateProfile)
+	})
+
 	log.Printf("starting server on :%s (env=%s)", cfg.Port, cfg.Env)
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
 		log.Fatalf("server error: %v", err)
