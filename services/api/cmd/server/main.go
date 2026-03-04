@@ -11,6 +11,7 @@ import (
 	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
 	"github.com/E-Timileyin/skill-island/services/api/internal/config"
 	"github.com/E-Timileyin/skill-island/services/api/internal/db"
+	"github.com/E-Timileyin/skill-island/services/api/internal/ws"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/golang-migrate/migrate/v4"
@@ -37,6 +38,15 @@ func main() {
 		Cfg: cfg,
 	}
 
+	// Start WebSocket hub.
+	hub := ws.NewHub(pool)
+	go hub.Run()
+
+	wsHandler := &api.WSHandler{
+		Hub:       hub,
+		JWTSecret: cfg.JWTSecret,
+	}
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -54,6 +64,9 @@ func main() {
 			r.Get("/me", h.Me)
 		})
 	})
+
+	// WebSocket upgrade — JWT validated inside handler before upgrade.
+	r.Get("/ws/game", wsHandler.ServeWS)
 
 	log.Printf("starting server on :%s (env=%s)", cfg.Port, cfg.Env)
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
