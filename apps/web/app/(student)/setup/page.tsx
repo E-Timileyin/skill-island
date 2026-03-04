@@ -1,0 +1,71 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { createProfile, getProfile } from "@/lib/api";
+import ProfileSetup from "@/components/game/ProfileSetup";
+
+export default function SetupPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [checkingProfile, setCheckingProfile] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    // Check if profile already exists → redirect to island
+    getProfile()
+      .then(() => {
+        router.replace("/island");
+      })
+      .catch(() => {
+        // No profile yet — stay on setup
+        setCheckingProfile(false);
+      });
+  }, [user, authLoading, router]);
+
+  async function handleSubmit(data: {
+    nickname: string;
+    avatar_id: number;
+    play_mode: string;
+  }) {
+    setError(undefined);
+    setSubmitting(true);
+
+    try {
+      await createProfile(data);
+      router.push("/island");
+    } catch (err: unknown) {
+      const apiErr = err as { message?: string };
+      setError(apiErr.message || "Failed to create profile");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (authLoading || checkingProfile) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-lg text-gray-500">Loading…</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-sky-100 to-blue-50 p-4">
+      <ProfileSetup
+        onSubmit={handleSubmit}
+        isLoading={submitting}
+        error={error}
+      />
+    </main>
+  );
+}

@@ -82,3 +82,39 @@ export function submitSession(
     body: JSON.stringify(payload),
   });
 }
+
+export interface Profile {
+  id: string;
+  nickname: string;
+  avatar_id: number;
+  total_stars: number;
+  total_xp: number;
+  play_mode: string;
+  created_at: string;
+}
+
+export function getProfile(): Promise<Profile> {
+  return request<Profile>("/api/profiles/me");
+}
+
+export function createProfile(data: {
+  nickname: string;
+  avatar_id: number;
+  play_mode: string;
+}): Promise<Profile> {
+  return request<Profile>("/api/profiles", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateProfile(data: {
+  nickname?: string;
+  avatar_id?: number;
+  play_mode?: string;
+}): Promise<Profile> {
+  return request<Profile>("/api/profiles/me", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
