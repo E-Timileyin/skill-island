@@ -282,6 +282,7 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 				"avatar_id":   profile.AvatarID,
 				"total_stars": profile.TotalStars,
 				"total_xp":    profile.TotalXP,
+				"play_mode":   profile.PlayMode,
 			}
 		}
 	}
