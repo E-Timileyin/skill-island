@@ -7,10 +7,13 @@ import (
 	"testing"
 
 	"github.com/E-Timileyin/skill-island/services/api/internal/api"
+	"github.com/E-Timileyin/skill-island/services/api/internal/config"
 )
 
 func TestHealth(t *testing.T) {
-	h := &api.Handler{}
+	h := &api.Handler{
+		Cfg: config.Config{},
+	}
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
