@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/E-Timileyin/skill-island/services/api/internal/api"
+	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
 	"github.com/E-Timileyin/skill-island/services/api/internal/config"
 	"github.com/E-Timileyin/skill-island/services/api/internal/db"
 	"github.com/go-chi/chi/v5"
@@ -31,13 +32,28 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	h := &api.Handler{}
+	h := &api.Handler{
+		DB:  pool,
+		Cfg: cfg,
+	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	r.Get("/health", h.Health)
+
+	r.Route("/api/auth", func(r chi.Router) {
+		r.Post("/register", h.Register)
+		r.Post("/login", h.Login)
+		r.Post("/logout", h.Logout)
+		r.Post("/refresh", h.Refresh)
+
+		r.Group(func(r chi.Router) {
+			r.Use(auth.Middleware(cfg.JWTSecret))
+			r.Get("/me", h.Me)
+		})
+	})
 
 	log.Printf("starting server on :%s (env=%s)", cfg.Port, cfg.Env)
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
