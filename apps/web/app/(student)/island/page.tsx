@@ -46,7 +46,8 @@ export default function IslandPage() {
       .then((p) => {
         // Detect newly unlocked zones by comparing with previous XP
         const prevXPStr = sessionStorage.getItem(XP_SESSION_KEY);
-        const prevXP = prevXPStr !== null ? Number(prevXPStr) : p.total_xp;
+        const parsedXP = prevXPStr !== null ? parseInt(prevXPStr, 10) : NaN;
+        const prevXP = Number.isFinite(parsedXP) ? parsedXP : p.total_xp;
         const unlocked = detectNewlyUnlocked(prevXP, p.total_xp);
         setNewlyUnlocked(unlocked);
 
@@ -55,9 +56,14 @@ export default function IslandPage() {
 
         setProfile(p);
       })
-      .catch(() => {
-        // No profile — redirect to setup
-        router.replace("/setup");
+      .catch((err: unknown) => {
+        const apiErr = err as { code?: string };
+        if (apiErr.code === "PROFILE_NOT_FOUND" || apiErr.code === "NOT_FOUND") {
+          router.replace("/setup");
+        } else {
+          // Network or unexpected error — redirect to setup as fallback
+          router.replace("/setup");
+        }
       })
       .finally(() => setProfileLoading(false));
   }, [user, authLoading, router]);
