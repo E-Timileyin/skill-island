@@ -12,16 +12,17 @@ interface ZoneCardProps {
   onClick: () => void;
 }
 
-export default function ZoneCard({
-  label,
-  emoji,
-  locked,
-  deferred,
-  requiredXP,
-  currentXP,
-  isNewlyUnlocked,
-  onClick,
-}: ZoneCardProps) {
+export default function ZoneCard(props: ZoneCardProps) {
+  const {
+    label,
+    emoji,
+    locked,
+    deferred,
+    requiredXP,
+    currentXP,
+    isNewlyUnlocked,
+    onClick,
+  } = props;
   const unlocked = !locked;
 
   return (
