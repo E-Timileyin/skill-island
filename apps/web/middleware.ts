@@ -21,13 +21,23 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Decode JWT payload to check role (without verifying — verification is server-side)
+  // Decode JWT payload for UX-only routing. Signature verification happens
+  // server-side on every API call (internal/auth middleware). This decode is
+  // solely to redirect users to the correct section — it is NOT a security
+  // gate. If the token is tampered with, server APIs will reject it.
   try {
     const payloadBase64 = accessToken.split(".")[1];
+    if (!payloadBase64) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
     const payload = JSON.parse(
       Buffer.from(payloadBase64, "base64").toString("utf-8")
     );
-    const role: string = payload.role;
+    const role: string | undefined = payload.role;
+
+    if (!role) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
 
     // Students cannot access dashboard routes
     if (isDashboardRoute && role === "student") {
