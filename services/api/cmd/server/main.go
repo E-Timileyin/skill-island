@@ -68,6 +68,7 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth.Middleware(cfg.JWTSecret))
 		r.Post("/sessions", h.SubmitSession)
+		r.Get("/analytics/overview", h.AnalyticsOverview)
 	})
 
 	// WebSocket upgrade — JWT validated inside handler before upgrade.
