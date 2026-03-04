@@ -31,6 +31,10 @@ type SessionResult struct {
 	BehavioralMetricsCount int      `json:"behavioral_metrics_count"`
 }
 
+// maxActionsPerSession is the upper bound on actions a client may submit.
+// Sessions exceeding this are rejected as implausible (anti-DoS measure).
+const maxActionsPerSession = 10000
+
 // validGameTypes is the set of accepted game_type values.
 var validGameTypes = map[string]bool{
 	"memory_cove":  true,
@@ -101,11 +105,8 @@ func (h *Handler) SubmitSession(w http.ResponseWriter, r *http.Request) {
 	// Calculate XP from stars.
 	xpEarned := validator.CalculateXP(valResult.StarsEarned)
 
-	// Convert duration from ms to seconds.
-	durationSeconds := sub.DurationMs / 1000
-	if durationSeconds <= 0 {
-		durationSeconds = 1
-	}
+	// Convert duration from ms to seconds (round up so sub-second sessions are at least 1s).
+	durationSeconds := (sub.DurationMs + 999) / 1000
 
 	// Write game_sessions + behavioral_metrics in a single transaction.
 	sessionInput := db.CreateSessionInput{
@@ -160,7 +161,7 @@ func validateActions(sub SessionSubmission) validator.ValidationResult {
 	actionCount := len(sub.Actions)
 
 	// Reject sessions with implausible action counts.
-	if actionCount > 10000 {
+	if actionCount > maxActionsPerSession {
 		return validator.ValidationResult{
 			Rejected:     true,
 			RejectReason: "implausible action count",
