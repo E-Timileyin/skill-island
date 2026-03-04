@@ -35,8 +35,8 @@ type ProfileUpdate struct {
 
 // UpdateProfile applies a partial update to a student profile and returns the updated row.
 func UpdateProfile(ctx context.Context, pool *pgxpool.Pool, profileID string, fields ProfileUpdate) (StudentProfile, error) {
-	setClauses := []string{}
-	args := []interface{}{}
+	setClauses := make([]string, 0, 3)
+	args := make([]any, 0, 4)
 	argIdx := 1
 
 	if fields.Nickname != nil {

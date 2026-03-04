@@ -10,6 +10,9 @@ import (
 	"github.com/E-Timileyin/skill-island/services/api/internal/db"
 )
 
+// validPlayModes defines the allowed values for play_mode on student profiles.
+var validPlayModes = map[string]bool{"solo": true, "team": true}
+
 // requireStudent extracts claims and checks the role is "student".
 // Returns the claims on success, or writes a JSON error and returns nil.
 func requireStudent(w http.ResponseWriter, r *http.Request) *auth.Claims {
@@ -60,7 +63,6 @@ func (h *Handler) CreateProfile(w http.ResponseWriter, r *http.Request) {
 		req.PlayMode = "solo"
 	}
 
-	validPlayModes := map[string]bool{"solo": true, "team": true}
 	if !validPlayModes[req.PlayMode] {
 		writeJSON(w, http.StatusBadRequest, APIError{Code: "VALIDATION_ERROR", Message: "play_mode must be solo or team"})
 		return
@@ -125,7 +127,6 @@ func (h *Handler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.PlayMode != nil {
-		validPlayModes := map[string]bool{"solo": true, "team": true}
 		if !validPlayModes[*req.PlayMode] {
 			writeJSON(w, http.StatusBadRequest, APIError{Code: "VALIDATION_ERROR", Message: "play_mode must be solo or team"})
 			return
