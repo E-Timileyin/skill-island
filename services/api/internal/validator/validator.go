@@ -5,6 +5,8 @@ import (
 )
 
 // Action represents a single game action submitted by the client.
+// Payload is excluded from JSON marshaling — game-specific validators
+// unmarshal each action's raw JSON into type-specific structs directly.
 type Action struct {
 	Type            string          `json:"type"`
 	ClientTimestamp int             `json:"client_timestamp"`
