@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skillisland
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./services/api:/app
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/skillisland?sslmode=disable
+      JWT_SECRET: change-this-in-production-minimum-32-chars
+      JWT_REFRESH_SECRET: change-this-in-production-different-from-above
+      PORT: "8080"
+      ENV: development
+      ALLOWED_ORIGINS: http://localhost:3000
+    depends_on:
+      - postgres
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+      NEXT_PUBLIC_WS_URL: ws://localhost:8080
+
+volumes:
+  pgdata:
