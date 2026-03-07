@@ -20,7 +20,7 @@ func TestHealth(t *testing.T) {
 
 	h.Health(w, req)
 
-	i f w.Code != http.StatusOK {
+	if w.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", w.Code)
 	}
 

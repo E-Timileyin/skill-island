@@ -100,3 +100,55 @@ func CreateGameSessionWithMetrics(ctx context.Context, pool *pgxpool.Pool, input
 
 	return gs, len(metrics), nil
 }
+
+// WriteTeamTowerSession records the outcome of a multiplayer Team Tower session.
+func WriteTeamTowerSession(ctx context.Context, pool *pgxpool.Pool, roomID, p1ID, p2ID string, groupXP int, completed bool, seed int64, disconnectReason *string, stars int, xpPerPlayer int) error {
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Insert into room_sessions
+	_, err = tx.Exec(ctx,
+		`INSERT INTO room_sessions
+			(id, game_type, player_1_profile_id, player_2_profile_id, completed, ended_at, disconnect_reason)
+		 VALUES ($1, 'team_tower', $2, $3, $4, now(), $5)`,
+		roomID, p1ID, p2ID, completed, disconnectReason,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to insert room_sessions: %w", err)
+	}
+
+	// Insert game_sessions and update stats for each player
+	for _, pid := range []string{p1ID, p2ID} {
+		if pid == "" {
+			continue
+		}
+		
+		_, err = tx.Exec(ctx,
+			`INSERT INTO game_sessions
+				(profile_id, game_type, mode, score, duration_seconds, accuracy, stars_earned)
+			 VALUES ($1, 'team_tower', 'coop', $2, 0, 1.0, $3)`,
+			pid, groupXP, stars,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert game_sessions for %s: %w", pid, err)
+		}
+
+		// Also update profiles (using AddXPToProfile / AddStarsToProfile logic)
+		_, err = tx.Exec(ctx,
+			`UPDATE student_profiles
+			 SET total_xp = total_xp + $2,
+			     total_stars = total_stars + $3,
+			     updated_at = now()
+			 WHERE id = $1`,
+			pid, xpPerPlayer, stars,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to update profile stats for %s: %w", pid, err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}

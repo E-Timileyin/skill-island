@@ -95,6 +95,12 @@ func TestHub_TwoPlayers_RoomReady(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	sendMsg(t, conn2, ws.JoinRoom{Type: "join_room", GameType: "team_tower"})
 
+	var wMsg map[string]interface{}
+	readMsg(t, conn1, &wMsg)
+	if wMsg["type"] != "waiting_for_partner" {
+		t.Fatalf("expected waiting_for_partner, got %v", wMsg["type"])
+	}
+
 	var msg1 map[string]interface{}
 	readMsg(t, conn1, &msg1)
 	if msg1["type"] != "room_ready" {
@@ -123,6 +129,9 @@ func TestHub_StateUpdate_BroadcastOnTick(t *testing.T) {
 	sendMsg(t, conn1, ws.JoinRoom{Type: "join_room", GameType: "team_tower"})
 	time.Sleep(100 * time.Millisecond)
 	sendMsg(t, conn2, ws.JoinRoom{Type: "join_room", GameType: "team_tower"})
+
+	var wMsg map[string]interface{}
+	readMsg(t, conn1, &wMsg) // discard waiting_for_partner
 
 	var rr1, rr2 map[string]interface{}
 	readMsg(t, conn1, &rr1)
@@ -162,6 +171,9 @@ func TestHub_EnforceOneRoomPerProfile(t *testing.T) {
 
 	sendMsg(t, conn, ws.JoinRoom{Type: "join_room", GameType: "team_tower"})
 
+	var wMsg map[string]interface{}
+	readMsg(t, conn, &wMsg)
+	
 	var errMsg map[string]interface{}
 	readMsg(t, conn, &errMsg)
 	if errMsg["type"] != "error" {
@@ -182,9 +194,12 @@ func TestHub_LeaveRoom_NotifiesPartner(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	sendMsg(t, conn2, ws.JoinRoom{Type: "join_room", GameType: "team_tower"})
 
+	var wMsg map[string]interface{}
+	readMsg(t, conn1, &wMsg) // discard waiting_for_partner
+
 	var dummy map[string]interface{}
-	readMsg(t, conn1, &dummy)
-	readMsg(t, conn2, &dummy)
+	readMsg(t, conn1, &dummy) // discard room_ready
+	readMsg(t, conn2, &dummy) // discard room_ready
 
 	sendMsg(t, conn1, ws.LeaveRoom{Type: "leave_room"})
 

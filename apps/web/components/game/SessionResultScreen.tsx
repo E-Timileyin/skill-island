@@ -1,9 +1,12 @@
+"use client";
+
 import React, { useState } from 'react';
 
 interface SessionResultScreenProps {
+  outcome?: 'win' | 'lose' | 'incomplete';
   starsEarned: number;
   xpEarned: number;
-  totalXP: number;
+  totalXP?: number;
   unlockedZones: string[];
   onPlayAgain: () => void;
   onGoToIsland: () => void;
@@ -16,7 +19,7 @@ const encouragement = [
   'Amazing! You mastered Memory Cove!'
 ];
 
-export default function SessionResultScreen({ starsEarned, xpEarned, totalXP, unlockedZones, onPlayAgain, onGoToIsland }: SessionResultScreenProps) {
+export default function SessionResultScreen({ outcome, starsEarned, xpEarned, totalXP, unlockedZones, onPlayAgain, onGoToIsland }: SessionResultScreenProps) {
   const [showStars, setShowStars] = useState(0);
 
   React.useEffect(() => {

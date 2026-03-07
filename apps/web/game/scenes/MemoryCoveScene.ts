@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import * as Phaser from 'phaser';
 import { buildButtonID, getShapeColour, getEncouragementText } from '../logic/memoryCove';
 import EventBus from '../events/EventBus';
 

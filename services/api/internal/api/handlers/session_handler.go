@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
 	"github.com/E-Timileyin/skill-island/services/api/internal/db"
@@ -13,6 +14,7 @@ import (
 // SessionSubmission is the expected JSON body for POST /api/sessions.
 // The client submits actions only — scores are never accepted from the client.
 type SessionSubmission struct {
+	SessionToken  string            `json:"session_token,omitempty"`
 	GameType      string            `json:"game_type"`
 	Mode          string            `json:"mode"`
 	Actions       []json.RawMessage `json:"actions"`
@@ -89,13 +91,41 @@ func (h *Handler) SubmitSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(sub.Actions) == 0 {
-		writeJSON(w, http.StatusBadRequest, APIError{Code: "VALIDATION_ERROR", Message: "actions must not be empty"})
-		return
+	// Focus Forest specific validation.
+	if sub.GameType == "focus_forest" {
+		if len(sub.Actions) > 300 {
+			writeJSON(w, http.StatusUnprocessableEntity, APIError{Code: "SESSION_REJECTED", Message: "implausible action count for focus_forest"})
+			return
+		}
+		if sub.DurationMs < 5000 {
+			writeJSON(w, http.StatusUnprocessableEntity, APIError{Code: "SESSION_REJECTED", Message: "impossibly short session"})
+			return
+		}
+	}
+
+	// Look up pending session for seed and difficulty.
+	var seed int64
+	var difficultyLevel int = 1
+	if sub.SessionToken != "" {
+		ps, err := db.GetPendingSession(r.Context(), h.DB, sub.SessionToken)
+		if err != nil {
+			writeJSON(w, http.StatusUnprocessableEntity, APIError{Code: "SESSION_TOKEN_NOT_FOUND", Message: "session token not found"})
+			return
+		}
+		if ps.Used {
+			writeJSON(w, http.StatusUnprocessableEntity, APIError{Code: "SESSION_TOKEN_ALREADY_USED", Message: "session_token_already_used"})
+			return
+		}
+		if time.Now().After(ps.ExpiresAt) {
+			writeJSON(w, http.StatusUnprocessableEntity, APIError{Code: "SESSION_TOKEN_EXPIRED", Message: "session_token_expired"})
+			return
+		}
+		seed = ps.Seed
+		difficultyLevel = ps.DifficultyLevel
 	}
 
 	// Validate actions and compute score server-side.
-	valResult := validateActions(sub)
+	valResult := validateActions(sub, seed, difficultyLevel)
 	if valResult.Rejected {
 		log.Printf("SubmitSession: rejected session for profile %s: %s (action_count=%d)", claims.ProfileID, valResult.RejectReason, len(sub.Actions))
 		writeJSON(w, http.StatusUnprocessableEntity, APIError{Code: "SESSION_REJECTED", Message: valResult.RejectReason})
@@ -140,6 +170,13 @@ func (h *Handler) SubmitSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if sub.SessionToken != "" {
+		if err := db.MarkPendingSessionUsed(r.Context(), h.DB, sub.SessionToken); err != nil {
+			log.Printf("SubmitSession: MarkPendingSessionUsed error: %v", err)
+			// Non-fatal, session was already saved
+		}
+	}
+
 	// Determine unlocked zones.
 	unlockedZones := validator.CheckUnlockedZones(newTotalXP)
 
@@ -154,13 +191,71 @@ func (h *Handler) SubmitSession(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// CoopSessionSubmission is the expected JSON body for POST /api/sessions/coop.
+type CoopSessionSubmission struct {
+	GameType      string `json:"game_type"`
+	Mode          string `json:"mode"`
+	RoomSessionID string `json:"room_session_id"`
+	Outcome       string `json:"outcome"`
+	DurationMs    int    `json:"duration_ms"`
+}
+
+// SubmitCoopSession handles POST /api/sessions/coop.
+// The room's score is already persisted by the WS hub; this endpoint
+// returns the caller's updated profile totals for immediate UI display.
+func (h *Handler) SubmitCoopSession(w http.ResponseWriter, r *http.Request) {
+	claims := auth.ClaimsFromContext(r.Context())
+	if claims == nil {
+		writeJSON(w, http.StatusUnauthorized, APIError{Code: "UNAUTHORIZED", Message: "not authenticated"})
+		return
+	}
+	if claims.Role != "student" {
+		writeJSON(w, http.StatusForbidden, APIError{Code: "FORBIDDEN", Message: "only students can submit sessions"})
+		return
+	}
+	if claims.ProfileID == "" {
+		writeJSON(w, http.StatusForbidden, APIError{Code: "FORBIDDEN", Message: "student profile required"})
+		return
+	}
+
+	var sub CoopSessionSubmission
+	if err := json.NewDecoder(r.Body).Decode(&sub); err != nil {
+		writeJSON(w, http.StatusBadRequest, APIError{Code: "BAD_REQUEST", Message: "invalid request body"})
+		return
+	}
+
+	if sub.GameType != "team_tower" {
+		writeJSON(w, http.StatusBadRequest, APIError{Code: "VALIDATION_ERROR", Message: "coop endpoint only valid for team_tower"})
+		return
+	}
+
+	// Fetch the current profile to return up-to-date totals.
+	// XP/stars were already written by the WS room; we just read them back.
+	profile, err := db.GetStudentProfileByID(r.Context(), h.DB, claims.ProfileID)
+	if err != nil {
+		log.Printf("SubmitCoopSession: GetProfileByID error: %v", err)
+		writeJSON(w, http.StatusInternalServerError, APIError{Code: "INTERNAL_ERROR", Message: "failed to fetch profile"})
+		return
+	}
+
+	unlockedZones := validator.CheckUnlockedZones(profile.TotalXP)
+
+	writeJSON(w, http.StatusCreated, SessionResult{
+		Score:         0,
+		Accuracy:      0,
+		StarsEarned:   1, // Coop stars already applied by WS room; return 1 as minimum display
+		XPEarned:      0, // XP already credited by WS room
+		TotalXP:       profile.TotalXP,
+		UnlockedZones: unlockedZones,
+	})
+}
+
 // validateActions dispatches to the appropriate validator based on game_type.
-// Currently returns a placeholder result — full per-game validators (memory, focus, tower)
-// will be implemented in later phases.
-func validateActions(sub SessionSubmission) validator.ValidationResult {
+func validateActions(sub SessionSubmission, seed int64, difficultyLevel int) validator.ValidationResult {
 	actionCount := len(sub.Actions)
 
-	if actionCount == 0 || actionCount > 500 {
+	// Memory cove: max 500 actions.
+	if sub.GameType == "memory_cove" && actionCount > 500 {
 		return validator.ValidationResult{
 			Rejected:     true,
 			RejectReason: "implausible action count",
@@ -168,7 +263,6 @@ func validateActions(sub SessionSubmission) validator.ValidationResult {
 	}
 
 	if sub.GameType == "memory_cove" && sub.Mode == "solo" {
-		// Unmarshal actions into MemoryCoveAction
 		var actions []validator.MemoryCoveAction
 		for _, raw := range sub.Actions {
 			var act validator.MemoryCoveAction
@@ -180,9 +274,6 @@ func validateActions(sub SessionSubmission) validator.ValidationResult {
 			}
 			actions = append(actions, act)
 		}
-		// TODO: Retrieve session seed from pending_sessions table using session_token
-		// For now, use a placeholder seed (should be replaced with DB lookup)
-		seed := int64(123456)
 		roundsCompleted := 1 // TODO: derive from session context
 		val := validator.ValidateActions(actions, seed, roundsCompleted)
 		scoreRes := validator.CalculateScore(val, roundsCompleted)
@@ -208,39 +299,63 @@ func validateActions(sub SessionSubmission) validator.ValidationResult {
 		}
 	}
 
-	// Fallback: generic placeholder for other game types
-	score := actionCount * 10
-	accuracy := 0.0
-	if actionCount > 0 {
-		accuracy = 1.0
+	// Focus Forest validation.
+	if sub.GameType == "focus_forest" && sub.Mode == "solo" {
+		var actions []validator.FocusForestAction
+		for _, raw := range sub.Actions {
+			var act validator.FocusForestAction
+			if err := json.Unmarshal(raw, &act); err != nil {
+				return validator.ValidationResult{
+					Rejected:     true,
+					RejectReason: "invalid action format",
+				}
+			}
+			// Clamp negative reaction times to 0.
+			if act.ClientTimestamp < 0 {
+				act.ClientTimestamp = 0
+			}
+			actions = append(actions, act)
+		}
+
+		// Regenerate manifest from stored seed + difficulty_level.
+		manifest := validator.GenerateSpawnManifest(seed, validator.SESSION_DURATION, difficultyLevel)
+
+		// Validate taps against manifest.
+		tapResult := validator.ValidateTaps(actions, manifest, difficultyLevel)
+		scoredResult := validator.CalculateAttentionScore(tapResult)
+
+		// Build behavioral metrics for each tap action.
+		metrics := make([]validator.BehavioralMetric, len(actions))
+		for i, act := range actions {
+			rt := int(tapResult.ReactionTimes[i])
+			metrics[i] = validator.BehavioralMetric{
+				EventType:         act.Type,
+				ReactionTimeMs:    &rt,
+				HesitationMs:      nil,
+				RetryCount:        0,
+				Correct:           tapResult.Correct[i],
+				TimestampOffsetMs: int(act.ClientTimestamp),
+				Metadata:          sub.Actions[i],
+			}
+		}
+
+		// Use attention score as the score (scaled to 0-1000).
+		score := int(scoredResult.AttentionScore * 1000)
+
+		return validator.ValidationResult{
+			Score:       score,
+			Accuracy:    scoredResult.AttentionScore,
+			StarsEarned: scoredResult.Stars,
+			Metrics:     metrics,
+		}
 	}
-	starsEarned := 0
-	switch {
-	case accuracy >= 0.90:
-		starsEarned = 3
-	case accuracy >= 0.70:
-		starsEarned = 2
-	case accuracy >= 0.50:
-		starsEarned = 1
-	}
-	metrics := make([]validator.BehavioralMetric, 0, actionCount)
-	for i := range sub.Actions {
-		offsetMs := (i + 1) * 100
-		metrics = append(metrics, validator.BehavioralMetric{
-			EventType:         "action",
-			ReactionTimeMs:    nil,
-			HesitationMs:      nil,
-			RetryCount:        0,
-			Correct:           true,
-			TimestampOffsetMs: offsetMs,
-			Metadata:          sub.Actions[i],
-		})
-	}
+
+	// Fallback: zero session (e.g., empty action log or unsupported game type).
 	return validator.ValidationResult{
-		Score:       score,
-		Accuracy:    accuracy,
-		StarsEarned: starsEarned,
-		Metrics:     metrics,
+		Score:       0,
+		Accuracy:    0,
+		StarsEarned: 0,
+		Metrics:     nil,
 	}
 }
 

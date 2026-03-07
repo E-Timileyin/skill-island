@@ -171,30 +171,7 @@ func TestSubmitSession_InvalidMode(t *testing.T) {
 	}
 }
 
-func TestSubmitSession_EmptyActions(t *testing.T) {
-	h := newTestHandler()
 
-	token, _ := auth.GenerateAccessToken("user-1", "student", "profile-1", h.Cfg.JWTSecret)
-
-	body, _ := json.Marshal(map[string]interface{}{
-		"game_type":   "memory_cove",
-		"mode":        "solo",
-		"actions":     []interface{}{},
-		"duration_ms": 60000,
-	})
-	req := httptest.NewRequest(http.MethodPost, "/api/sessions", bytes.NewReader(body))
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
-
-	mw := auth.Middleware(h.Cfg.JWTSecret)
-	handler := mw(http.HandlerFunc(h.SubmitSession))
-
-	w := httptest.NewRecorder()
-	handler.ServeHTTP(w, req)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected status 400, got %d", w.Code)
-	}
-}
 
 func TestSubmitSession_InvalidDuration(t *testing.T) {
 	h := newTestHandler()

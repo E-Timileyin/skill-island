@@ -5,7 +5,6 @@ import (
 	"log"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,7 +13,7 @@ type Hub struct {
 	mu sync.RWMutex
 
 	// rooms is the set of active rooms keyed by room ID.
-	rooms map[string]*Room
+	rooms map[string]*TeamTowerRoom
 
 	// clients is the set of all connected clients keyed by profile ID.
 	clients map[string]*Client
@@ -24,6 +23,9 @@ type Hub struct {
 
 	// waitingRooms maps game_type → room ID for rooms in WAITING state.
 	waitingRooms map[string]string
+
+	// reconnecting maps a disconnected profile ID to its room ID during the reconnect window.
+	reconnecting map[string]string
 
 	// register / unregister channels for concurrency-safe client management.
 	register   chan *Client
@@ -35,10 +37,11 @@ type Hub struct {
 // NewHub creates a Hub ready to Run().
 func NewHub(db *pgxpool.Pool) *Hub {
 	return &Hub{
-		rooms:        make(map[string]*Room),
+		rooms:        make(map[string]*TeamTowerRoom),
 		clients:      make(map[string]*Client),
 		profileRoom:  make(map[string]string),
 		waitingRooms: make(map[string]string),
+		reconnecting: make(map[string]string),
 		register:     make(chan *Client, 64),
 		unregister:   make(chan *Client, 64),
 		db:           db,
@@ -93,7 +96,7 @@ func (h *Hub) handleJoinRoom(c *Client, msg JoinRoom) {
 
 	// Enforce one active room per profile.
 	if existingRoomID, ok := h.profileRoom[c.profileID]; ok {
-		if room, exists := h.rooms[existingRoomID]; exists && room.State() != StateEnded {
+		if room, exists := h.rooms[existingRoomID]; exists && room.RoomState != "ENDED" {
 			c.SendJSON(ErrorMsg{Type: "error", Code: "ALREADY_IN_ROOM", Message: "you are already in a room"})
 			return
 		}
@@ -104,7 +107,7 @@ func (h *Hub) handleJoinRoom(c *Client, msg JoinRoom) {
 	// Check for a waiting room of the same game type.
 	if waitingRoomID, ok := h.waitingRooms[msg.GameType]; ok {
 		room, exists := h.rooms[waitingRoomID]
-		if exists && room.State() == StateWaiting {
+		if exists && room.RoomState == "WAITING" {
 			// Seat as player 2.
 			if err := room.AddPlayer(c); err != nil {
 				c.SendJSON(ErrorMsg{Type: "error", Code: "JOIN_FAILED", Message: err.Error()})
@@ -119,11 +122,14 @@ func (h *Hub) handleJoinRoom(c *Client, msg JoinRoom) {
 	}
 
 	// Create a new waiting room.
-	roomID := uuid.New().String()
-	room := NewRoom(roomID, msg.GameType, h, h.db, c)
+	room := NewTeamTowerRoom(h, h.db)
+	roomID := room.ID
 	h.rooms[roomID] = room
 	h.profileRoom[c.profileID] = roomID
 	h.waitingRooms[msg.GameType] = roomID
+	
+	room.AddPlayer(c)
+	c.SendJSON(Envelope{Type: "waiting_for_partner"})
 	log.Printf("ws: created room=%s type=%s player1=%s", roomID, msg.GameType, c.profileID)
 }
 
@@ -174,14 +180,14 @@ func (h *Hub) removeRoom(roomID string) {
 	}
 
 	// Clean profile → room index.
-	if room.p1ID != "" {
-		if h.profileRoom[room.p1ID] == roomID {
-			delete(h.profileRoom, room.p1ID)
+	if room.ProfileIDs[0] != "" {
+		if h.profileRoom[room.ProfileIDs[0]] == roomID {
+			delete(h.profileRoom, room.ProfileIDs[0])
 		}
 	}
-	if room.p2ID != "" {
-		if h.profileRoom[room.p2ID] == roomID {
-			delete(h.profileRoom, room.p2ID)
+	if room.ProfileIDs[1] != "" {
+		if h.profileRoom[room.ProfileIDs[1]] == roomID {
+			delete(h.profileRoom, room.ProfileIDs[1])
 		}
 	}
 
@@ -195,7 +201,7 @@ func (h *Hub) removeRoom(roomID string) {
 }
 
 // GetRoom returns a room by ID (used by reconnect logic).
-func (h *Hub) GetRoom(roomID string) (*Room, error) {
+func (h *Hub) GetRoom(roomID string) (*TeamTowerRoom, error) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	room, ok := h.rooms[roomID]

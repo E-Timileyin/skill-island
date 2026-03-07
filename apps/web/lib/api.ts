@@ -1,5 +1,5 @@
-export async function initSession(gameType: string): Promise<{ session_token: string; seed: number }> {
-  return request<{ session_token: string; seed: number }>(`/api/sessions/init`, {
+export async function initSession(gameType: string): Promise<{ session_token: string; seed: number; difficulty_level?: number }> {
+  return request<{ session_token: string; seed: number; difficulty_level?: number }>(`/api/sessions/init`, {
     method: 'POST',
     body: JSON.stringify({ game_type: gameType, mode: 'solo' })
   });
@@ -88,15 +88,39 @@ export interface SessionPayload {
 }
 
 export interface SessionResult {
-  session_id: string;
-  stars: number;
+  session_id?: string;
+  score: number;
+  accuracy: number;
+  stars_earned: number;
   xp_earned: number;
+  total_xp: number;
+  unlocked_zones: string[];
+  behavioral_metrics_count?: number;
 }
 
 export async function submitSession(submission: { session_token: string; actions: any[] }): Promise<any> {
   return request<any>("/api/sessions", {
     method: "POST",
     body: JSON.stringify(submission),
+  });
+}
+
+export function getSessionManifest(token: string): Promise<any> {
+  return request<any>(`/api/sessions/manifest?token=${encodeURIComponent(token)}`, {
+    method: "GET"
+  });
+}
+
+export function submitCoopSession(data: {
+  game_type: "team_tower",
+  mode: "cooperative",
+  room_session_id: string,
+  outcome: string,
+  duration_ms: number
+}): Promise<SessionResult> {
+  return request<SessionResult>("/api/sessions/coop", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
 }
 

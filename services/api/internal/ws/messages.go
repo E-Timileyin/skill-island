@@ -62,6 +62,12 @@ type PlayerDisconnected struct {
 	ReconnectWindowSeconds int    `json:"reconnect_window_seconds"` // 30
 }
 
+// IdleWarning warns players of impending session closure.
+type IdleWarning struct {
+	Type             string `json:"type"`              // "idle_warning"
+	SecondsRemaining int    `json:"seconds_remaining"` // 30
+}
+
 // SessionEnd signals that the game session is over.
 type SessionEnd struct {
 	Type          string          `json:"type"`            // "session_end"

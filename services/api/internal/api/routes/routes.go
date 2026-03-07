@@ -34,7 +34,10 @@ func SetupRouter(h *handlers.Handler, wsHandler *handlers.WSHandler, cfg config.
 	// Authenticated API routes
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth.Middleware(cfg.JWTSecret))
+		r.Post("/sessions/init", h.InitSession)
+		r.Get("/sessions/manifest", h.GetManifest)
 		r.Post("/sessions", h.SubmitSession)
+		r.Post("/sessions/coop", h.SubmitCoopSession)
 		r.Get("/analytics/overview", h.AnalyticsOverview)
 	})
 
