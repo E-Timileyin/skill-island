@@ -10,7 +10,7 @@ var starToXP = map[int]int{
 
 // ZoneThreshold defines the XP required to unlock a game zone.
 type ZoneThreshold struct {
-	Zone      string
+	Zone       string
 	XPRequired int
 }
 
@@ -25,7 +25,11 @@ var zoneThresholds = []ZoneThreshold{
 
 // CalculateXP returns the XP earned for a given number of stars (0–3).
 // Stars outside the 0–3 range return 0 XP.
-func CalculateXP(starsEarned int) int {
+// For Memory Cove, XP = stars*10 + roundsCompleted*5
+func CalculateXP(gameType string, starsEarned int, roundsCompleted int) int {
+	if gameType == "memory_cove" {
+		return starsEarned*10 + roundsCompleted*5
+	}
 	xp, ok := starToXP[starsEarned]
 	if !ok {
 		return 0

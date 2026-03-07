@@ -1,4 +1,4 @@
-package api_test
+package handlers_test
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/E-Timileyin/skill-island/services/api/internal/api"
+	"github.com/E-Timileyin/skill-island/services/api/internal/api/handlers"
 	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
 )
 
@@ -41,7 +41,7 @@ func TestAnalyticsOverview_StudentRole(t *testing.T) {
 		t.Fatalf("expected status 403, got %d", w.Code)
 	}
 
-	var resp api.APIError
+	var resp handlers.APIError
 	json.NewDecoder(w.Body).Decode(&resp)
 	if resp.Code != "FORBIDDEN" {
 		t.Fatalf("expected FORBIDDEN code, got %s", resp.Code)
@@ -66,7 +66,7 @@ func TestAnalyticsOverview_ParentRole_MissingProfileID(t *testing.T) {
 		t.Fatalf("expected status 400, got %d", w.Code)
 	}
 
-	var resp api.APIError
+	var resp handlers.APIError
 	json.NewDecoder(w.Body).Decode(&resp)
 	if resp.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR code, got %s", resp.Code)
@@ -91,4 +91,3 @@ func TestAnalyticsOverview_EducatorRole_MissingProfileID(t *testing.T) {
 		t.Fatalf("expected status 400, got %d", w.Code)
 	}
 }
-

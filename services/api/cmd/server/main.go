@@ -7,13 +7,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/E-Timileyin/skill-island/services/api/internal/api"
-	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
+	"github.com/E-Timileyin/skill-island/services/api/internal/api/handlers"
+	"github.com/E-Timileyin/skill-island/services/api/internal/api/routes"
 	"github.com/E-Timileyin/skill-island/services/api/internal/config"
 	"github.com/E-Timileyin/skill-island/services/api/internal/db"
 	"github.com/E-Timileyin/skill-island/services/api/internal/ws"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -33,7 +31,7 @@ func main() {
 		log.Fatalf("failed to run migrations: %v", err)
 	}
 
-	h := &api.Handler{
+	h := &handlers.Handler{
 		DB:  pool,
 		Cfg: cfg,
 	}
@@ -42,44 +40,12 @@ func main() {
 	hub := ws.NewHub(pool)
 	go hub.Run()
 
-	wsHandler := &api.WSHandler{
+	wsHandler := &handlers.WSHandler{
 		Hub:       hub,
 		JWTSecret: cfg.JWTSecret,
 	}
 
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-
-	r.Get("/health", h.Health)
-
-	r.Route("/api/auth", func(r chi.Router) {
-		r.Post("/register", h.Register)
-		r.Post("/login", h.Login)
-		r.Post("/logout", h.Logout)
-		r.Post("/refresh", h.Refresh)
-
-		r.Group(func(r chi.Router) {
-			r.Use(auth.Middleware(cfg.JWTSecret))
-			r.Get("/me", h.Me)
-		})
-	})
-
-	r.Route("/api", func(r chi.Router) {
-		r.Use(auth.Middleware(cfg.JWTSecret))
-		r.Post("/sessions", h.SubmitSession)
-		r.Get("/analytics/overview", h.AnalyticsOverview)
-	})
-
-	// WebSocket upgrade — JWT validated inside handler before upgrade.
-	r.Get("/ws/game", wsHandler.ServeWS)
-
-	r.Route("/api/profiles", func(r chi.Router) {
-		r.Use(auth.Middleware(cfg.JWTSecret))
-		r.Post("/", h.CreateProfile)
-		r.Get("/me", h.GetProfile)
-		r.Patch("/me", h.UpdateProfile)
-	})
+	r := routes.SetupRouter(h, wsHandler, cfg)
 
 	log.Printf("starting server on :%s (env=%s)", cfg.Port, cfg.Env)
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {

@@ -34,4 +34,11 @@ class EventBus {
 }
 
 const eventBus = new EventBus();
+
+// UI update event: Phaser → Next.js for live round/star updates
+// Usage: eventBus.emit('game:ui-update', { round, stars, phase })
+
+// Profile loaded event: Next.js → Phaser for player nickname
+// Usage: eventBus.emit('game:profile-loaded', { nickname })
+
 export default eventBus;

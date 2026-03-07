@@ -18,7 +18,7 @@ func TestCalculateXP(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		got := CalculateXP(tc.stars)
+		got := CalculateXP("focus_forest", tc.stars, 0)
 		if got != tc.expected {
 			t.Errorf("CalculateXP(%d) = %d, want %d", tc.stars, got, tc.expected)
 		}

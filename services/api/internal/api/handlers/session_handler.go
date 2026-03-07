@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"encoding/json"
@@ -103,7 +103,7 @@ func (h *Handler) SubmitSession(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calculate XP from stars.
-	xpEarned := validator.CalculateXP(valResult.StarsEarned)
+	xpEarned := validator.CalculateXP(sub.GameType, valResult.StarsEarned, sub.DurationMs/1000)
 
 	// Convert duration from ms to seconds (round up so sub-second sessions are at least 1s).
 	durationSeconds := (sub.DurationMs + 999) / 1000
@@ -160,23 +160,60 @@ func (h *Handler) SubmitSession(w http.ResponseWriter, r *http.Request) {
 func validateActions(sub SessionSubmission) validator.ValidationResult {
 	actionCount := len(sub.Actions)
 
-	// Reject sessions with implausible action counts.
-	if actionCount > maxActionsPerSession {
+	if actionCount == 0 || actionCount > 500 {
 		return validator.ValidationResult{
 			Rejected:     true,
 			RejectReason: "implausible action count",
 		}
 	}
 
-	// Placeholder: compute basic score from action count.
-	// Per-game validators (memory.go, focus.go, tower.go) will override this.
+	if sub.GameType == "memory_cove" && sub.Mode == "solo" {
+		// Unmarshal actions into MemoryCoveAction
+		var actions []validator.MemoryCoveAction
+		for _, raw := range sub.Actions {
+			var act validator.MemoryCoveAction
+			if err := json.Unmarshal(raw, &act); err != nil {
+				return validator.ValidationResult{
+					Rejected:     true,
+					RejectReason: "invalid action format",
+				}
+			}
+			actions = append(actions, act)
+		}
+		// TODO: Retrieve session seed from pending_sessions table using session_token
+		// For now, use a placeholder seed (should be replaced with DB lookup)
+		seed := int64(123456)
+		roundsCompleted := 1 // TODO: derive from session context
+		val := validator.ValidateActions(actions, seed, roundsCompleted)
+		scoreRes := validator.CalculateScore(val, roundsCompleted)
+
+		metrics := make([]validator.BehavioralMetric, len(actions))
+		for i, act := range actions {
+			metrics[i] = validator.BehavioralMetric{
+				EventType:         act.Type,
+				ReactionTimeMs:    nil,
+				HesitationMs:      nil,
+				RetryCount:        0,
+				Correct:           val.Correct[i],
+				TimestampOffsetMs: int(act.ClientTimestamp),
+				Metadata:          sub.Actions[i],
+			}
+		}
+
+		return validator.ValidationResult{
+			Score:       scoreRes.Score,
+			Accuracy:    scoreRes.Accuracy,
+			StarsEarned: scoreRes.Stars,
+			Metrics:     metrics,
+		}
+	}
+
+	// Fallback: generic placeholder for other game types
 	score := actionCount * 10
 	accuracy := 0.0
 	if actionCount > 0 {
 		accuracy = 1.0
 	}
-
-	// Star thresholds (generic placeholder until per-game validators exist).
 	starsEarned := 0
 	switch {
 	case accuracy >= 0.90:
@@ -186,8 +223,6 @@ func validateActions(sub SessionSubmission) validator.ValidationResult {
 	case accuracy >= 0.50:
 		starsEarned = 1
 	}
-
-	// Build placeholder behavioral metrics from actions.
 	metrics := make([]validator.BehavioralMetric, 0, actionCount)
 	for i := range sub.Actions {
 		offsetMs := (i + 1) * 100
@@ -201,7 +236,6 @@ func validateActions(sub SessionSubmission) validator.ValidationResult {
 			Metadata:          sub.Actions[i],
 		})
 	}
-
 	return validator.ValidationResult{
 		Score:       score,
 		Accuracy:    accuracy,

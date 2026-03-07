@@ -1,4 +1,4 @@
-package api_test
+package handlers_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/E-Timileyin/skill-island/services/api/internal/api"
+	"github.com/E-Timileyin/skill-island/services/api/internal/api/handlers"
 	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
 )
 
@@ -139,7 +139,7 @@ func TestSubmitSession_InvalidGameType(t *testing.T) {
 		t.Fatalf("expected status 400, got %d", w.Code)
 	}
 
-	var resp api.APIError
+	var resp handlers.APIError
 	json.NewDecoder(w.Body).Decode(&resp)
 	if resp.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR code, got %s", resp.Code)

@@ -1,4 +1,4 @@
-package api_test
+package handlers_test
 
 import (
 	"encoding/json"
@@ -6,12 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/E-Timileyin/skill-island/services/api/internal/api"
+	"github.com/E-Timileyin/skill-island/services/api/internal/api/handlers"
 	"github.com/E-Timileyin/skill-island/services/api/internal/config"
 )
 
 func TestHealth(t *testing.T) {
-	h := &api.Handler{
+	h := &handlers.Handler{
 		Cfg: config.Config{},
 	}
 
@@ -20,7 +20,7 @@ func TestHealth(t *testing.T) {
 
 	h.Health(w, req)
 
-	if w.Code != http.StatusOK {
+	i f w.Code != http.StatusOK {
 		t.Fatalf("expected status 200, got %d", w.Code)
 	}
 

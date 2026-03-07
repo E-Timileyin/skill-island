@@ -1,3 +1,9 @@
+export async function initSession(gameType: string): Promise<{ session_token: string; seed: number }> {
+  return request<{ session_token: string; seed: number }>(`/api/sessions/init`, {
+    method: 'POST',
+    body: JSON.stringify({ game_type: gameType, mode: 'solo' })
+  });
+}
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export interface User {
@@ -87,12 +93,10 @@ export interface SessionResult {
   xp_earned: number;
 }
 
-export function submitSession(
-  payload: SessionPayload
-): Promise<SessionResult> {
-  return request<SessionResult>("/api/sessions", {
+export async function submitSession(submission: { session_token: string; actions: any[] }): Promise<any> {
+  return request<any>("/api/sessions", {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify(submission),
   });
 }
 

@@ -1,4 +1,4 @@
-package api_test
+package handlers_test
 
 import (
 	"bytes"
@@ -7,13 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/E-Timileyin/skill-island/services/api/internal/api"
+	"github.com/E-Timileyin/skill-island/services/api/internal/api/handlers"
 	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
 	"github.com/E-Timileyin/skill-island/services/api/internal/config"
 )
 
-func newTestHandler() *api.Handler {
-	return &api.Handler{
+func newTestHandler() *handlers.Handler {
+	return &handlers.Handler{
 		Cfg: config.Config{
 			JWTSecret:        "test-secret-minimum-32-characters-long",
 			JWTRefreshSecret: "test-refresh-secret-minimum-32-chars",
@@ -66,7 +66,7 @@ func TestRegister_InvalidRole(t *testing.T) {
 		t.Fatalf("expected status 400, got %d", w.Code)
 	}
 
-	var resp api.APIError
+	var resp handlers.APIError
 	json.NewDecoder(w.Body).Decode(&resp)
 	if resp.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR code, got %s", resp.Code)
@@ -90,7 +90,7 @@ func TestRegister_ShortPassword(t *testing.T) {
 		t.Fatalf("expected status 400, got %d", w.Code)
 	}
 
-	var resp api.APIError
+	var resp handlers.APIError
 	json.NewDecoder(w.Body).Decode(&resp)
 	if resp.Code != "VALIDATION_ERROR" {
 		t.Fatalf("expected VALIDATION_ERROR code, got %s", resp.Code)

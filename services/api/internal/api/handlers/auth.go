@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"encoding/json"
@@ -8,30 +8,9 @@ import (
 	"strings"
 
 	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
-	"github.com/E-Timileyin/skill-island/services/api/internal/config"
 	"github.com/E-Timileyin/skill-island/services/api/internal/db"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// APIError is the standard error response format.
-type APIError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-// Handler holds dependencies for HTTP route handlers.
-type Handler struct {
-	DB  *pgxpool.Pool
-	Cfg config.Config
-}
-
-// Health returns the service health status.
-func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
-}
 
 // registerRequest is the expected JSON body for POST /api/auth/register.
 type registerRequest struct {
@@ -116,7 +95,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	auth.SetTokenCookies(w, accessToken, refreshToken, secure)
 
 	writeJSON(w, http.StatusCreated, map[string]interface{}{
-		"id":   user.ID,
+		"id":    user.ID,
 		"email": user.Email,
 		"role":  user.Role,
 	})
@@ -183,7 +162,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	auth.SetTokenCookies(w, accessToken, refreshToken, secure)
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"id":   user.ID,
+		"id":    user.ID,
 		"email": user.Email,
 		"role":  user.Role,
 	})
@@ -288,11 +267,4 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, resp)
-}
-
-// writeJSON writes a JSON response with the given status code.
-func writeJSON(w http.ResponseWriter, status int, v interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
 }

@@ -26,11 +26,10 @@ type BehavioralMetric struct {
 
 // ValidationResult holds the computed results of validating a game session.
 type ValidationResult struct {
+	Rejected     bool
+	RejectReason string
 	Score        int
 	Accuracy     float64
 	StarsEarned  int
-	XPEarned     int
 	Metrics      []BehavioralMetric
-	Rejected     bool
-	RejectReason string
 }
