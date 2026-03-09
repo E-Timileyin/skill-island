@@ -30,16 +30,16 @@ func TestCheckUnlockedZones(t *testing.T) {
 		totalXP  int
 		expected []string
 	}{
-		{0, []string{"memory_cove"}},
-		{29, []string{"memory_cove"}},
-		{30, []string{"memory_cove", "focus_forest"}},
-		{79, []string{"memory_cove", "focus_forest"}},
-		{80, []string{"memory_cove", "focus_forest", "team_tower"}},
-		{149, []string{"memory_cove", "focus_forest", "team_tower"}},
-		{150, []string{"memory_cove", "focus_forest", "team_tower", "pattern_plateau"}},
-		{249, []string{"memory_cove", "focus_forest", "team_tower", "pattern_plateau"}},
-		{250, []string{"memory_cove", "focus_forest", "team_tower", "pattern_plateau", "community_hub"}},
-		{1000, []string{"memory_cove", "focus_forest", "team_tower", "pattern_plateau", "community_hub"}},
+		{0, []string{"memory_cove", "cross_nought"}},
+		{29, []string{"memory_cove", "cross_nought"}},
+		{30, []string{"memory_cove", "cross_nought", "focus_forest"}},
+		{79, []string{"memory_cove", "cross_nought", "focus_forest"}},
+		{80, []string{"memory_cove", "cross_nought", "focus_forest", "team_tower"}},
+		{149, []string{"memory_cove", "cross_nought", "focus_forest", "team_tower"}},
+		{150, []string{"memory_cove", "cross_nought", "focus_forest", "team_tower", "pattern_plateau"}},
+		{249, []string{"memory_cove", "cross_nought", "focus_forest", "team_tower", "pattern_plateau"}},
+		{250, []string{"memory_cove", "cross_nought", "focus_forest", "team_tower", "pattern_plateau", "community_hub"}},
+		{1000, []string{"memory_cove", "cross_nought", "focus_forest", "team_tower", "pattern_plateau", "community_hub"}},
 	}
 
 	for _, tc := range tests {

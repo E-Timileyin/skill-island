@@ -39,9 +39,11 @@ const maxActionsPerSession = 10000
 
 // validGameTypes is the set of accepted game_type values.
 var validGameTypes = map[string]bool{
-	"memory_cove":  true,
-	"focus_forest": true,
-	"team_tower":   true,
+	"memory_cove":     true,
+	"focus_forest":    true,
+	"team_tower":      true,
+	"pattern_plateau": true,
+	"cross_nought":    true,
 }
 
 // validModes is the set of accepted mode values.

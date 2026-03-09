@@ -8,12 +8,13 @@ import IslandMap from "@/components/game/IslandMap";
 // import bgMemoryCove from "@/public/assets/bg-memory-cove.png";
 // import Image from 'next/image'
 
-/** XP thresholds for the three MVP zones. */
+/** XP thresholds for the game zones. */
 const ZONE_THRESHOLDS: { zone: string; requiredXP: number; deferred?: boolean }[] = [
   { zone: "memory_cove", requiredXP: 0 },
+  { zone: "cross_nought", requiredXP: 0 },
   { zone: "focus_forest", requiredXP: 30 },
   { zone: "team_tower", requiredXP: 80 },
-  { zone: "pattern_plateau", requiredXP: 150 },
+  { zone: "pattern_plateau", requiredXP: 150, deferred: true },
   { zone: "community_hub", requiredXP: 250, deferred: true },
 ];
 

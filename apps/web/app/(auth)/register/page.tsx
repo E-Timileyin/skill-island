@@ -47,12 +47,12 @@ export default function RegisterPage() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-blue-900/20 backdrop-blur-[2px]" />
+        {/* <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" /> */}
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 w-full max-w-lg mx-auto space-y-6 flex flex-col items-center justify-center bg-white/80 backdrop-blur-md p-10 rounded-[2.5rem] shadow-2xl border-4 border-white/50"
+        className="relative z-10 w-full max-w-lg mx-auto space-y-6 flex flex-col items-center justify-center bg-white/50 backdrop-blur-md p-10 rounded-[2.5rem] shadow-2xl border-4 border-white/50"
       >
         <div className="flex justify-center mb-2">
           <Image src={logo} alt="Logo" className="h-[9rem] md:h-[10rem] w-auto drop-shadow-lg" />

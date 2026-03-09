@@ -17,6 +17,7 @@ type ZoneThreshold struct {
 // zoneThresholds is ordered by ascending XP requirement.
 var zoneThresholds = []ZoneThreshold{
 	{Zone: "memory_cove", XPRequired: 0},
+	{Zone: "cross_nought", XPRequired: 0},
 	{Zone: "focus_forest", XPRequired: 30},
 	{Zone: "team_tower", XPRequired: 80},
 	{Zone: "pattern_plateau", XPRequired: 150},
