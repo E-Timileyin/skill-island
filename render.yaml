@@ -9,8 +9,6 @@ services:
     dockerContext: .
     healthCheckPath: /health
     envVars:
-      - key: PORT
-        value: "8080"
       - key: ENV
         value: production
       - key: JWT_SECRET
@@ -18,6 +16,6 @@ services:
       - key: JWT_REFRESH_SECRET
         generateValue: true
       - key: DATABASE_URL
-        sync: false # Set this to your NeonDB connection string in the Render Dashboard
+        value: "postgres://user:password@endpoint.neon.tech/neondb?sslmode=require"
       - key: ALLOWED_ORIGINS
         value: "https://skill-island.vercel.app,http://localhost:3000"
