@@ -21,7 +21,7 @@ func Load() Config {
 		DatabaseURL:      getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/skillisland"),
 		JWTSecret:        getEnv("JWT_SECRET", ""),
 		JWTRefreshSecret: getEnv("JWT_REFRESH_SECRET", ""),
-		Port:             getEnv("PORT", "8080"),
+		Port:             getEnv("PORT", "8081"),
 		Env:              getEnv("ENV", "development"),
 		AllowedOrigins:   strings.Split(getEnv("ALLOWED_ORIGINS", "http://localhost:3000"), ","),
 	}

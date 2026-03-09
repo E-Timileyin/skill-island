@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { getProfile, type Profile } from "@/lib/api";
 import IslandMap from "@/components/game/IslandMap";
+import bgMemoryCove from "@/public/assets/bg-memory-cove.png";
+import Image from 'next/image'
 
 /** XP thresholds for the three MVP zones. */
 const ZONE_THRESHOLDS: { zone: string; requiredXP: number; deferred?: boolean }[] = [
   { zone: "memory_cove", requiredXP: 0 },
   { zone: "focus_forest", requiredXP: 30 },
   { zone: "team_tower", requiredXP: 80 },
-  { zone: "pattern_plateau", requiredXP: 150, deferred: true },
+  { zone: "pattern_plateau", requiredXP: 150 },
   { zone: "community_hub", requiredXP: 250, deferred: true },
 ];
 
@@ -77,7 +79,15 @@ export default function IslandPage() {
 
   if (authLoading || profileLoading) {
     return (
+
       <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-sky-100 to-blue-50 p-4 font-['Nunito']">
+        <Image
+          src={bgMemoryCove}
+          alt="image"
+          fill
+          priority
+          className="absolute"
+        />
         {/* Loading skeleton */}
         <div className="w-full max-w-2xl animate-pulse space-y-6 pt-4">
           {/* HUD skeleton */}

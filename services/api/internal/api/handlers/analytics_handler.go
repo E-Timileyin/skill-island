@@ -20,6 +20,7 @@ type WeeklySummary struct {
 	TotalXP               int      `json:"total_xp"`
 	SessionsThisWeek      int      `json:"sessions_this_week"`
 	SnapshotDate          string   `json:"snapshot_date"`
+	StudentNickname       string   `json:"student_nickname"`
 	Message               string   `json:"message,omitempty"`
 }
 
@@ -100,5 +101,6 @@ func (h *Handler) AnalyticsOverview(w http.ResponseWriter, r *http.Request) {
 		TotalXP:               totalXP,
 		SessionsThisWeek:      engagementFreq,
 		SnapshotDate:          snapshot.SnapshotDate.Format("2006-01-02"),
+		StudentNickname:       profile.Nickname,
 	})
 }

@@ -12,7 +12,7 @@ interface CoopSessionResultScreenProps {
 }
 
 const outcomeMessages = {
-  win: "Amazing Teamwork! 🏆",
+  win: "Amazing Teamwork!",
   lose: "Great Effort! The tower wobbled — try again! 🏗️",
   incomplete: "Good Try! Your partner disconnected this time. 💪"
 };

@@ -1,171 +1,155 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
+// import { WoodenSign } from "../WoodenSign";
+import { AVATARS } from "@/lib/avatars";
+import Image from "next/image";
+import { CheckCircle2, Box, Users } from "lucide-react";
+import { createProfile } from "@/lib/api"; // Added back just in case, though it seems unused in this file now
 
-const AVATARS = [
-  { id: 1, emoji: "🦊", bg: "bg-orange-400" },
-  { id: 2, emoji: "🐙", bg: "bg-purple-400" },
-  { id: 3, emoji: "🦋", bg: "bg-blue-400" },
-  { id: 4, emoji: "🌿", bg: "bg-green-400" },
-  { id: 5, emoji: "🌟", bg: "bg-yellow-400" },
-  { id: 6, emoji: "🐳", bg: "bg-cyan-400" },
-];
-
-interface ProfileSetupProps {
-  onSubmit: (data: {
-    nickname: string;
-    avatar_id: number;
-    play_mode: string;
-  }) => void;
+export type ProfileSetupProps = {
+  onSubmit: (data: { nickname: string; avatar_id: number; play_mode: string }) => Promise<void>;
   isLoading: boolean;
   error?: string;
-}
+};
 
-const NICKNAME_REGEX = /^[a-zA-Z0-9 ]+$/;
-
-export default function ProfileSetup({
-  onSubmit,
-  isLoading,
-  error,
-}: ProfileSetupProps) {
+export default function ProfileSetup({ onSubmit, isLoading, error }: ProfileSetupProps) {
+  const [selectedAvatar, setSelectedAvatar] = useState(1); // default to first avatar id
   const [nickname, setNickname] = useState("");
-  const [avatarId, setAvatarId] = useState(1);
-  const [playMode, setPlayMode] = useState<"solo" | "team">("solo");
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [playMode, setPlayMode] = useState("");
 
-  const selectedAvatar = AVATARS.find((a) => a.id === avatarId) ?? AVATARS[0];
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setValidationError(null);
-
-    const trimmed = nickname.trim();
-    if (!trimmed) {
-      setValidationError("Nickname is required");
-      return;
-    }
-    if (trimmed.length > 20) {
-      setValidationError("Nickname must be 20 characters or fewer");
-      return;
-    }
-    if (!NICKNAME_REGEX.test(trimmed)) {
-      setValidationError("Nickname can only contain letters, numbers, and spaces");
-      return;
-    }
-
-    onSubmit({ nickname: trimmed, avatar_id: avatarId, play_mode: playMode });
-  }
-
-  const displayError = validationError || error;
+  const handleSubmit = async () => {
+    await onSubmit({
+      nickname,
+      avatar_id: selectedAvatar,
+      play_mode: playMode,
+    });
+  };
+ 
+  // Find the selected avatar object
+  const selectedAvatarObj = AVATARS.find(a => a.id === selectedAvatar) || AVATARS[0];
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full max-w-md space-y-6 rounded-2xl bg-white p-8 shadow-lg"
-    >
-      <h1 className="text-2xl font-bold text-center text-gray-800">
-        Create Your Profile
-      </h1>
+    <div className="flex flex-col items-center w-full max-w-3xl">
+      {/* <WoodenSign text="Welcome to Skill Island!" /> */}
+      <h2 className="text-sky-600 font-extrabold text-2xl mb-4 drop-shadow-sm">
+        Choose Your Avatar!
+      </h2>
 
-      {displayError && (
-        <p className="text-sm text-red-600 text-center rounded-lg bg-red-50 p-2">
-          {displayError}
-        </p>
-      )}
+      <div className="bg-amber-50 rounded-3xl p-6 shadow-xl border-4 border-white w-full relative">
+        <div className="absolute inset-2 border-2 border-dashed border-amber-200 rounded-2xl pointer-events-none"></div>
 
-      {/* Avatar preview */}
-      <div className="flex flex-col items-center gap-2">
-        <div
-          className={`flex h-20 w-20 items-center justify-center rounded-full text-4xl ${selectedAvatar.bg}`}
-        >
-          {selectedAvatar.emoji}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+          {/* Left Side */}
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-4 gap-4">
+              {AVATARS.map((avatar) => {
+                const isSelected = selectedAvatar === avatar.id;
+                return (
+                  <button
+                    key={avatar.id}
+                    onClick={() => setSelectedAvatar(avatar.id)}
+                    className={`relative w-16 h-16 rounded-full flex items-center justify-center transition-transform overflow-hidden ${
+                      isSelected
+                        ? "ring-4 ring-green-400 scale-110 shadow-lg"
+                        : "hover:scale-105 border-2 border-amber-200 bg-white"
+                    }`}
+                  >
+                    <Image
+                      src={avatar.src}
+                      alt={avatar.label}
+                      width={64}
+                      height={64}
+                      className="object-cover"
+                    />
+                    {isSelected && (
+                      <div className="absolute -bottom-1 -right-1 bg-white rounded-full">
+                        <CheckCircle2 className="w-5 h-5 text-green-500 shadow-sm" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-4">
+              <label className="text-amber-800 font-bold text-lg">
+                Nickname:
+              </label>
+              <input
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                className="flex-1 bg-white border-2 border-amber-200 rounded-xl px-4 py-2 font-bold text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              />
+            </div>
+          </div>
+
+          {/* Right Side */}
+          <div className="flex flex-col gap-6 items-center">
+            <div className="bg-sky-100 border-4 border-amber-600 rounded-2xl p-4 w-full flex flex-col items-center relative">
+              <div className="absolute -top-4 bg-amber-600 text-white px-4 py-1 rounded-full font-bold text-sm">
+                Preview
+              </div>
+            <div className={`w-32 h-32 rounded-full border-4 border-white overflow-hidden mb-4 mt-2 shadow-inner bg-white`}>
+              <Image
+                src={selectedAvatarObj.src}
+                alt="Selected Avatar"
+                width={128}
+                height={128}
+                className="object-cover"
+              />
+            </div>
+              <div className="bg-amber-600 text-white px-6 py-2 rounded-lg font-bold w-full text-center">
+                {nickname || "Player"}
+              </div>
+            </div>
+
+            <div className="w-full">
+              <div className="text-amber-800 font-bold text-lg mb-2 text-center">
+                Play Mode:
+              </div>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => setPlayMode("solo")}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
+                    playMode === "solo"
+                      ? "bg-sky-400 text-white shadow-[0_4px_0_#0284c7] translate-y-0"
+                      : "bg-amber-100 text-amber-800 shadow-[0_4px_0_#fcd34d] hover:translate-y-1 hover:shadow-[0_2px_0_#fcd34d]"
+                  }`}
+                >
+                  <Box className="w-6 h-6" /> Solo
+                  {playMode === "solo" && (
+                    <CheckCircle2 className="w-5 h-5 text-green-300 ml-1" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setPlayMode("team")}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all ${
+                    playMode === "team"
+                      ? "bg-orange-400 text-white shadow-[0_4px_0_#c2410c] translate-y-0"
+                      : "bg-amber-100 text-amber-800 shadow-[0_4px_0_#fcd34d] hover:translate-y-1 hover:shadow-[0_2px_0_#fcd34d]"
+                  }`}
+                >
+                  <Users className="w-6 h-6" /> Team
+                  {playMode === "team" && (
+                    <CheckCircle2 className="w-5 h-5 text-green-300 ml-1" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <span className="text-sm text-gray-500">Your avatar</span>
       </div>
 
-      {/* Avatar grid */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Choose an avatar
-        </label>
-        <div className="grid grid-cols-3 gap-3">
-          {AVATARS.map((avatar) => (
-            <button
-              key={avatar.id}
-              type="button"
-              onClick={() => setAvatarId(avatar.id)}
-              className={`flex h-16 w-full items-center justify-center rounded-xl text-2xl transition-all ${
-                avatar.bg
-              } ${
-                avatarId === avatar.id
-                  ? "ring-4 ring-blue-500 ring-offset-2 scale-110"
-                  : "opacity-70 hover:opacity-100 hover:scale-105"
-              }`}
-            >
-              {avatar.emoji}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Nickname input */}
-      <div>
-        <label
-          htmlFor="nickname"
-          className="block text-sm font-semibold text-gray-700 mb-1"
-        >
-          Nickname
-        </label>
-        <input
-          id="nickname"
-          type="text"
-          maxLength={20}
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          placeholder="Enter your nickname"
-          className="block w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-      </div>
-
-      {/* Play mode toggle */}
-      <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          Play mode
-        </label>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setPlayMode("solo")}
-            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${
-              playMode === "solo"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            Solo
-          </button>
-          <button
-            type="button"
-            onClick={() => setPlayMode("team")}
-            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${
-              playMode === "team"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            Team
-          </button>
-        </div>
-      </div>
-
-      {/* Submit */}
       <button
-        type="submit"
+        onClick={handleSubmit}
+        className="mt-8 bg-gradient-to-b from-orange-400 to-orange-600 text-white font-extrabold text-2xl px-12 py-4 rounded-full shadow-[0_8px_0_#c2410c] border-4 border-white hover:translate-y-2 hover:shadow-[0_0px_0_#c2410c] transition-all z-20"
         disabled={isLoading}
-        className="w-full rounded-lg bg-green-500 py-3 text-lg font-bold text-white transition-colors hover:bg-green-600 disabled:opacity-50"
       >
-        {isLoading ? "Setting up…" : "Let\u2019s Go!"}
+        {isLoading ? "Loading…" : "Let’s Go!"}
       </button>
-    </form>
+      {error && <div className="mt-4 text-red-600 font-bold">{error}</div>}
+    </div>
   );
 }

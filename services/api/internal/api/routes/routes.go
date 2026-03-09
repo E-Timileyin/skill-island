@@ -6,11 +6,21 @@ import (
 	"github.com/E-Timileyin/skill-island/services/api/internal/config"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 // SetupRouter initializes the application routing logic.
 func SetupRouter(h *handlers.Handler, wsHandler *handlers.WSHandler, cfg config.Config) *chi.Mux {
 	r := chi.NewRouter()
+	// CORS must be first
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:3001"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 

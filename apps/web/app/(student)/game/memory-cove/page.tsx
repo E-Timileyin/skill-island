@@ -3,9 +3,10 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
 import EventBus from '@/game/events/EventBus';
-import MemoryCoveUI from '@/components/game/MemoryCoveUI';
+import { MemoryCoveScreen } from '@/components/game/MemoryCoveScreen';
 import SessionResultScreen from '@/components/game/SessionResultScreen';
 import { submitSession } from '@/lib/api';
+import Image from 'next/image';
 
 const PhaserGame = dynamic(() => import('@/game/PhaserGame'), { ssr: false });
 
@@ -69,9 +70,25 @@ export default function MemoryCovePage() {
   }
 
   return (
-    <div className="relative w-full h-screen">
-      <PhaserGame />
-      <MemoryCoveUI currentRound={currentRound} totalRounds={totalRounds} stars={stars} phase={phase} playerNickname={playerNickname} />
-    </div>
+    <main className="relative flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/assets/images/bg-memory-cove.jpg"
+          alt="Memory Cove Background"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-blue-900/10 backdrop-blur-[1px]" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-4xl flex flex-col items-center">
+        <div className="w-full relative overflow-hidden rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.6)] border-8 border-white/30 backdrop-blur-sm">
+          <MemoryCoveScreen />
+          <PhaserGame scene="MemoryCoveScene" />
+        </div>
+      </div>
+    </main>
   );
 }

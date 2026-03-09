@@ -10,6 +10,7 @@ import WaitingForPartner from "@/components/game/WaitingForPartner";
 import CoopSessionResultScreen from "@/components/game/CoopSessionResultScreen";
 import eventBus from "@/game/events/EventBus";
 import { submitCoopSession, getProfile, Profile } from "@/lib/api";
+import Image from "next/image";
 
 type Phase = "init" | "waiting" | "ready" | "playing" | "partner_disconnected" | "idle_warning" | "complete" | "saving" | "results" | "error" | "reconnecting" | "partner_reconnected";
 
@@ -88,7 +89,7 @@ export default function TeamTowerPage() {
 
         setSessionResult({
           outcome: data.outcome as 'win' | 'lose' | 'incomplete',
-          starsEarned: result.stars || data.stars || 1, 
+          starsEarned: result.stars_earned || data.stars || 1, 
           groupXPEarned: data.group_xp || 0,
           myXPEarned: result.xp_earned || 0,
           totalXP: (profile?.total_xp || 0) + (result.xp_earned || 0), // Use server's exact but estimate here for smooth UX
@@ -175,8 +176,20 @@ export default function TeamTowerPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4 relative">
-      <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-sky-900 border-4 border-slate-800">
+    <div className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden bg-slate-950">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0 opacity-50">
+        <Image
+          src="/assets/images/bg-team-tower.jpg"
+          alt="Team Tower Background"
+          fill
+          className="object-cover scale-110"
+          priority
+        />
+        <div className="absolute inset-0 bg-blue-900/10 backdrop-blur-[2px]" />
+      </div>
+
+      <div className="relative z-10 overflow-hidden rounded-[2rem] shadow-[0_30px_70px_rgba(0,0,0,0.7)] border-8 border-slate-700/50 backdrop-blur-sm">
         
         {phase === "waiting" && (
           <WaitingForPartner 

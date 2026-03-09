@@ -1,13 +1,7 @@
 "use client";
 
-const AVATARS: Record<number, string> = {
-  1: "🦊",
-  2: "🐙",
-  3: "🦋",
-  4: "🌿",
-  5: "🌟",
-  6: "🐳",
-};
+import { AVATARS } from "@/lib/avatars";
+import Image from "next/image";
 
 interface PlayerHUDProps {
   nickname: string;
@@ -41,7 +35,7 @@ export default function PlayerHUD({
   totalStars,
   totalXP,
 }: PlayerHUDProps) {
-  const avatarEmoji = AVATARS[avatarId] ?? "🦊";
+  const avatarObj = AVATARS.find((a) => a.id === avatarId) || AVATARS[0];
   const nextThreshold = getNextThreshold(totalXP);
   const prevThreshold = getPreviousThreshold(totalXP);
   const range = nextThreshold - prevThreshold;
@@ -50,8 +44,13 @@ export default function PlayerHUD({
   return (
     <div className="flex w-full items-center gap-4 rounded-2xl bg-white p-4 shadow-md font-['Nunito']">
       {/* Avatar */}
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-2xl">
-        {avatarEmoji}
+      <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 overflow-hidden border-2 border-blue-200">
+        <Image
+          src={avatarObj.src}
+          alt={nickname}
+          fill
+          className="object-cover"
+        />
       </div>
 
       {/* Name + stars */}

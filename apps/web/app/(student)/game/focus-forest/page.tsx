@@ -9,6 +9,7 @@ import FocusForestUI from "@/components/game/FocusForestUI";
 import eventBus from "@/game/events/EventBus";
 import { submitSession } from "@/lib/api";
 import SessionResultScreen from "@/components/game/SessionResultScreen";
+import Image from "next/image";
 
 export default function FocusForestPage() {
   const router = useRouter();
@@ -113,8 +114,20 @@ export default function FocusForestPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4">
-      <div className="relative overflow-hidden rounded-2xl shadow-2xl">
+    <div className="relative flex min-h-screen flex-col items-center justify-center p-4 overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/assets/images/bg-focus-forest.jpg"
+          alt="Focus Forest Background"
+          fill
+          className="object-cover scale-105"
+          priority
+        />
+        <div className="absolute inset-0 bg-emerald-900/10 backdrop-blur-[1px]" />
+      </div>
+
+      <div className="relative z-10 overflow-hidden rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-8 border-white/20 backdrop-blur-sm">
         <FocusForestUI
           timeRemainingMs={timeRemainingMs}
           totalDurationMs={60000}

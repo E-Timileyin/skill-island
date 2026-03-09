@@ -7,26 +7,25 @@ interface ZoneData {
   zone: string;
   label: string;
   requiredXP: number;
-  emoji: string;
+  image: string;
   deferred?: boolean;
 }
 
 const ZONES: ZoneData[] = [
-  { zone: "memory_cove", label: "Memory Cove", requiredXP: 0, emoji: "🧠" },
-  { zone: "focus_forest", label: "Focus Forest", requiredXP: 30, emoji: "🦋" },
-  { zone: "team_tower", label: "Team Tower", requiredXP: 80, emoji: "🏗️" },
+  { zone: "memory_cove", label: "Memory Cove", requiredXP: 0, image: "🧠" },
+  { zone: "focus_forest", label: "Focus Forest", requiredXP: 30, image: "🦋" },
+  { zone: "team_tower", label: "Team Tower", requiredXP: 80, image: "🏗️" },
   {
     zone: "pattern_plateau",
     label: "Pattern Plateau",
     requiredXP: 150,
-    emoji: "🔢",
-    deferred: true,
+    image: "🧩",
   },
   {
     zone: "community_hub",
     label: "Community Hub",
     requiredXP: 250,
-    emoji: "🏘️",
+    image: "",
     deferred: true,
   },
 ];
@@ -66,7 +65,7 @@ export default function IslandMap({
       </h1>
 
       {/* Zone cards grid */}
-      <div className="grid w-full max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid w-full max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"> 
         {ZONES.map((z) => {
           const locked = totalXP < z.requiredXP || z.deferred === true;
           return (
@@ -74,7 +73,7 @@ export default function IslandMap({
               key={z.zone}
               zone={z.zone}
               label={z.label}
-              emoji={z.emoji}
+              emoji={z.image}
               locked={locked}
               deferred={z.deferred === true}
               requiredXP={z.requiredXP}

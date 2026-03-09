@@ -28,6 +28,7 @@ export interface WeeklySummary {
   total_xp: number;
   sessions_this_week: number;
   snapshot_date: string;
+  student_nickname?: string;
   message?: string;
 }
 

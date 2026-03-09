@@ -21,7 +21,7 @@ export default function SetupPage() {
       return;
     }
 
-    // Check if profile already exists → redirect to island
+    // Check if profile already exists → stay on setup if not
     getProfile()
       .then(() => {
         router.replace("/island");

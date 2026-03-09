@@ -15,6 +15,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 		DB:  pool,
 		Cfg: cfg,
 	}
-
+	
 	// Start WebSocket hub.
 	hub := ws.NewHub(pool)
 	go hub.Run()
