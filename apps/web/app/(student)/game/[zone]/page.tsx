@@ -6,7 +6,7 @@ const PhaserGame = dynamic(() => import("@/game/PhaserGame"), { ssr: false });
 
 import React from "react";
 
-export default function GameZonePage(props: any) {
+export default function GameZonePage(props: { params: Promise<{ zone: string }> }) {
   const params = React.use(props.params);
   return (
     <main className="flex min-h-screen flex-col items-center justify-center">

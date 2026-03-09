@@ -1,0 +1,23 @@
+version: "1"
+
+services:
+  - type: web
+    name: skill-island-api
+    env: docker
+    rootDir: services/api
+    dockerfilePath: ./Dockerfile.prod
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false # Set this to your NeonDB connection string in the Render Dashboard
+      - key: ALLOWED_ORIGINS
+        value: "https://skill-island.vercel.app,http://localhost:3000"

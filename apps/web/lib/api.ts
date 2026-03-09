@@ -4,7 +4,7 @@ export async function initSession(gameType: string): Promise<{ session_token: st
     body: JSON.stringify({ game_type: gameType, mode: 'solo' })
   });
 }
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export interface User {
   id: string;
