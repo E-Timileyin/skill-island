@@ -64,17 +64,16 @@ export default function IslandMap({
           />
         </div>
         
-        {/* Hanging Skill Island Sign */}
-        <div className="relative hidden md:flex flex-col items-center -mt-8 mb-4">
-          <div className="flex gap-24 h-8">
-            <div className="w-2 h-full border-l-2 border-r-2 border-amber-800 bg-amber-600 rounded-sm shadow-[inset_0_0_4px_rgba(0,0,0,0.5)] bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(0,0,0,0.1)_2px,rgba(0,0,0,0.1)_4px)]" />
-            <div className="w-2 h-full border-l-2 border-r-2 border-amber-800 bg-amber-600 rounded-sm shadow-[inset_0_0_4px_rgba(0,0,0,0.5)] bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(0,0,0,0.1)_2px,rgba(0,0,0,0.1)_4px)]" />
-          </div>
-          <div className="bg-[#cd8347] border-4 border-[#7a4b27] rounded-xl px-12 py-3 shadow-[0_6px_0_#7a4b27] transform -skew-x-2">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-widest uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)]" style={{ textShadow: "2px 2px 0 #7a4b27, -2px -2px 0 #7a4b27, 2px -2px 0 #7a4b27, -2px 2px 0 #7a4b27, 0 4px 6px rgba(0,0,0,0.5)"}}>
-              Skill Island
-            </h1>
-          </div>
+        {/* Logo Image: Choose Your Explorer! */}
+        <div className="relative flex flex-col items-center -mt-8 mb-4">
+          <Image
+            src="/assets/logo/explorer.png"
+            alt="Choose Your Explorer!"
+            width={600}
+            height={120}
+            className="object-contain drop-shadow-lg"
+            priority
+          />
         </div>
       </div>
 

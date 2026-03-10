@@ -106,7 +106,7 @@ export default function IslandPage() {
           {/* Title skeleton */}
           <div className="mx-auto h-8 w-48 rounded bg-gray-200" />
           {/* Cards skeleton */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3s">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}

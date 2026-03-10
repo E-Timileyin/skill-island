@@ -41,7 +41,7 @@ export default function RegisterPage() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/assets/images/bg-login.jpg"
+          src="/assets/images/bg-login-1.jpg"
           alt="Background"
           fill
           className="object-cover"

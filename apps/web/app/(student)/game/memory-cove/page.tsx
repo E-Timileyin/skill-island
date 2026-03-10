@@ -188,10 +188,7 @@ export default function MemoryCovePage() {
     try {
       const res = await submitSession({
         session_token: sessionToken,
-        actions,
-        game_type: "memory_cove",
-        mode: "solo",
-        duration_ms: Date.now() - startTime,
+        actions
       });
       setResult(res);
       setPhase("result");

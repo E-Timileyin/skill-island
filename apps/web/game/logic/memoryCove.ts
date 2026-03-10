@@ -1,5 +1,4 @@
 // Memory Cove game logic helpers
-
 export function buildButtonID(shape: string, colour: string): string {
   return `${shape}-${colour}`;
 }

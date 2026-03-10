@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 type Player = 'X' | 'O' | null;
+type Winner = Player | 'Draw';
 
 const WINNING_COMBINATIONS = [
   [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -17,7 +18,7 @@ const WINNING_COMBINATIONS = [
 export default function PatternPlateauPage() {
   const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
-  const [winner, setWinner] = useState<Player>(null);
+  const [winner, setWinner] = useState<Winner>(null);
   const [winningLine, setWinningLine] = useState<number[] | null>(null);
   const [scoreX, setScoreX] = useState(0);
   const [scoreO, setScoreO] = useState(0);
@@ -32,7 +33,7 @@ export default function PatternPlateauPage() {
     }
     // Check for draw
     if (!currentBoard.includes(null)) {
-      return { winner: 'Draw' as Player, combo: null };
+      return { winner: 'Draw', combo: null };
     }
     return null;
   };
@@ -47,6 +48,7 @@ export default function PatternPlateauPage() {
     const result = checkWinner(newBoard);
     if (result) {
       if (result.winner === 'Draw') {
+        setWinner('Draw');
         setRoundCompleted(true);
       } else {
         setWinner(result.winner);

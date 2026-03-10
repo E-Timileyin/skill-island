@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-// import { WoodenSign } from "../WoodenSign";
 import { AVATARS } from "@/lib/avatars";
 import Image from "next/image";
 import { CheckCircle2, Box, Users } from "lucide-react";
@@ -30,16 +29,43 @@ export default function ProfileSetup({ onSubmit, isLoading, error }: ProfileSetu
   const selectedAvatarObj = AVATARS.find(a => a.id === selectedAvatar) || AVATARS[0];
 
   return (
-    <div className="flex flex-col items-center w-full max-w-3xl">
-      {/* <WoodenSign text="Welcome to Skill Island!" /> */}
-      <h2 className="text-sky-600 font-extrabold text-2xl mb-4 drop-shadow-sm">
-        Choose Your Avatar!
-      </h2>
+    <>
+    <div className="relative w-full min-h-screen flex flex-col items-center justify-center">
+      <div
+        className="w-full flex flex-col items-center pointer-events-none z-30
+          absolute top-0 left-1/2 -translate-x-1/2
+          md:static md:translate-x-0 md:mt-0 md:mb-8"
+        style={{ maxWidth: 700 }}
+      >
+        <Image
+          src="/assets/logo/profile-setup.png"
+          alt="Welcome to Skill Island! Choose Your Avatar!"
+          width={700}
+          height={220}
+          className="object-contain drop-shadow-lg select-none absolute  md:-top-[5.7rem]"
+          priority
+        />
+      </div>     
+      {/* Main Full-Screen Background Image */}
+      <div className="fixed inset-0 z-0 w-screen h-screen">
+        <Image
+          src="/assets/images/bg-profile-setup.webp"
+          alt="Mushroom Village Background"
+          fill
+          className="object-cover"
+          priority
+        />
+      </div>
 
-      <div className="bg-amber-50 rounded-3xl p-6 shadow-xl border-4 border-white w-full relative">
-        <div className="absolute inset-2 border-2 border-dashed border-amber-200 rounded-2xl pointer-events-none"></div>
+      {/* Logo fixed at the very top */}
+  
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+      <div className="w-full max-w-3xl pt-2 relative z-10 flex flex-col items-center">
+        {/* PROFILE COMPONENT */}
+        <div className="bg-amber-50 rounded-3xl p-6 shadow-xl border-4 border-white w-full relative mt-40 z-10">
+          <div className="absolute inset-2 border-2 border-dashed border-amber-200 rounded-2xl pointer-events-none"></div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
           {/* Left Side */}
           <div className="flex flex-col gap-6">
             <div className="grid grid-cols-4 gap-4">
@@ -87,20 +113,29 @@ export default function ProfileSetup({ onSubmit, isLoading, error }: ProfileSetu
 
           {/* Right Side */}
           <div className="flex flex-col gap-6 items-center">
-            <div className="bg-sky-100 border-4 border-amber-600 rounded-2xl p-4 w-full flex flex-col items-center relative">
-              <div className="absolute -top-4 bg-amber-600 text-white px-4 py-1 rounded-full font-bold text-sm">
+            <div className="bg-sky-100 border-4 border-amber-600 rounded-2xl p-4 w-full flex flex-col items-center relative overflow-hidden">
+              <div className="absolute inset-0 z-0">
+                <Image
+                  src="/assets/images/bg-profile-setup.webp"
+                  alt="Avatar Background"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              <div className="absolute -top-4 bg-amber-600 text-white px-4 py-1 rounded-full font-bold text-sm z-10">
                 Preview
               </div>
-            <div className={`w-32 h-32 rounded-full border-4 border-white overflow-hidden mb-4 mt-2 shadow-inner bg-white`}>
-              <Image
-                src={selectedAvatarObj.src}
-                alt="Selected Avatar"
-                width={128}
-                height={128}
-                className="object-cover"
-              />
-            </div>
-              <div className="bg-amber-600 text-white px-6 py-2 rounded-lg font-bold w-full text-center">
+              <div className={`w-32 h-32 rounded-full border-4 border-white overflow-hidden mb-4 mt-2 shadow-inner bg-white z-10`}>
+                <Image
+                  src={selectedAvatarObj.src}
+                  alt="Selected Avatar"
+                  width={128}
+                  height={128}
+                  className="object-cover"
+                />
+              </div>
+              <div className="bg-amber-600 text-white px-6 py-2 rounded-lg font-bold w-full text-center z-10">
                 {nickname || "Player"}
               </div>
             </div>
@@ -151,5 +186,7 @@ export default function ProfileSetup({ onSubmit, isLoading, error }: ProfileSetu
       </button>
       {error && <div className="mt-4 text-red-600 font-bold">{error}</div>}
     </div>
+  </div>
+</>
   );
 }
