@@ -17,7 +17,7 @@ interface ZoneData {
 const ZONES: ZoneData[] = [
   { zone: "memory_cove", label: "Memory Cove", requiredXP: 0, top: "32%", left: "15%" },
   { zone: "cross_nought", label: "Cross & Nought", requiredXP: 0, top: "55%", left: "18%" },
-  { zone: "pattern_plateau", label: "Pattern Plateau", requiredXP: 150, top: "25%", left: "50%", deferred: true },
+  { zone: "pattern_plateau", label: "Pattern Plateau", requiredXP: 150, top: "25%", left: "50%" },
   { zone: "team_tower", label: "Team Tower", requiredXP: 80, top: "28%", left: "82%" },
   { zone: "focus_forest", label: "Focus Forest", requiredXP: 30, top: "52%", left: "78%" },
   { zone: "community_hub", label: "Community Hub", requiredXP: 250, deferred: true, top: "75%", left: "50%" },

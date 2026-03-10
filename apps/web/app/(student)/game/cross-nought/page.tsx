@@ -14,10 +14,11 @@ const WINNING_COMBINATIONS = [
   [0, 4, 8], [2, 4, 6]             // Diagonals
 ];
 
-export default function PatternPlateauPage() {
+export default function CrossNoughtPage() {
   const [board, setBoard] = useState<Player[]>(Array(9).fill(null));
   const [isXNext, setIsXNext] = useState(true);
   const [winner, setWinner] = useState<Player>(null);
+  const [isDraw, setIsDraw] = useState(false);
   const [winningLine, setWinningLine] = useState<number[] | null>(null);
   const [scoreX, setScoreX] = useState(0);
   const [scoreO, setScoreO] = useState(0);
@@ -27,12 +28,12 @@ export default function PatternPlateauPage() {
     for (const combo of WINNING_COMBINATIONS) {
       const [a, b, c] = combo;
       if (currentBoard[a] && currentBoard[a] === currentBoard[b] && currentBoard[a] === currentBoard[c]) {
-        return { winner: currentBoard[a], combo };
+        return { winner: currentBoard[a], combo, draw: false };
       }
     }
     // Check for draw
     if (!currentBoard.includes(null)) {
-      return { winner: 'Draw' as Player, combo: null };
+      return { winner: null, combo: null, draw: true };
     }
     return null;
   };
@@ -46,7 +47,8 @@ export default function PatternPlateauPage() {
 
     const result = checkWinner(newBoard);
     if (result) {
-      if (result.winner === 'Draw') {
+      if (result.draw) {
+        setIsDraw(true);
         setRoundCompleted(true);
       } else {
         setWinner(result.winner);
@@ -64,6 +66,7 @@ export default function PatternPlateauPage() {
     setBoard(Array(9).fill(null));
     setIsXNext(true);
     setWinner(null);
+    setIsDraw(false);
     setWinningLine(null);
     setRoundCompleted(false);
   };
@@ -217,7 +220,7 @@ export default function PatternPlateauPage() {
             </div>
 
             {/* Glowing Winning Line Overlay */}
-            {winner && winner !== 'Draw' && (
+            {winner && (
               <motion.div 
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -246,7 +249,7 @@ export default function PatternPlateauPage() {
                 <div className="bg-[#4CAF50] border-[3px] border-white shadow-[0_8px_0_rgba(50,150,50,1),0_15px_20px_rgba(0,0,0,0.3)] rounded-full px-8 py-2 flex items-center justify-center transform -skew-x-2 gap-3">
                   <Trophy className="text-[#FFDE59] fill-[#FFDE59]" size={24} />
                   <span className="text-white text-3xl font-extrabold drop-shadow-[0_2px_1px_rgba(0,0,0,0.4)] tracking-wider">
-                    {winner === 'Draw' ? "It's a Draw!" : `${winner} Wins!`}
+                    {isDraw ? "It's a Draw!" : `${winner} Wins!`}
                   </span>
                   <Trophy className="text-[#FFDE59] fill-[#FFDE59]" size={24} />
                 </div>
