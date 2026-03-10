@@ -106,6 +106,7 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, se
 		HttpOnly: true,
 		Secure:   secure,
 		SameSite: http.SameSiteNoneMode,
+		Domain:   "skill-island.vercel.app",
 		Path:     "/",
 		MaxAge:   3600, // 1 hour
 	})
@@ -115,6 +116,7 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, se
 		HttpOnly: true,
 		Secure:   secure,
 		SameSite: http.SameSiteNoneMode,
+		Domain:   "skill-island.vercel.app",
 		Path:     "/api/auth/refresh",
 		MaxAge:   7 * 24 * 3600, // 7 days
 	})
