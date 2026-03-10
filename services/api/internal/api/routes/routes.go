@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/E-Timileyin/skill-island/services/api/internal/api/handlers"
 	"github.com/E-Timileyin/skill-island/services/api/internal/auth"
 	"github.com/E-Timileyin/skill-island/services/api/internal/config"
@@ -26,6 +28,12 @@ func SetupRouter(h *handlers.Handler, wsHandler *handlers.WSHandler, cfg config.
 
 	// Public routes
 	r.Get("/health", h.Health)
+	// Cronjob trigger route
+	r.Get("/cron/trigger", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		w.Write([]byte(`{"status":"ok","message":"cron triggered"}`))
+	})
 
 	// Auth routes
 	r.Route("/api/auth", func(r chi.Router) {
