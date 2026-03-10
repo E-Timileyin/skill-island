@@ -51,7 +51,7 @@ export default function PatternPlateauPage() {
         setWinner('Draw');
         setRoundCompleted(true);
       } else {
-        setWinner(result.winner);
+        setWinner(result.winner as Winner);
         setWinningLine(result.combo);
         setRoundCompleted(true);
         if (result.winner === 'X') setScoreX(s => s + 1);
