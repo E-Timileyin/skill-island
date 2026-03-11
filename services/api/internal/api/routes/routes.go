@@ -16,7 +16,7 @@ func SetupRouter(h *handlers.Handler, wsHandler *handlers.WSHandler, cfg config.
 	r := chi.NewRouter()
 	// CORS must be first
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:3001", "https://skill-island.vercel.app"},
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

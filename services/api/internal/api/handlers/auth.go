@@ -97,13 +97,13 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	secure := h.Cfg.Env != "development"
-	auth.SetTokenCookies(w, accessToken, refreshToken, secure)
-
+	// Return both tokens in response body (no cookies)
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"id":    user.ID,
-		"email": user.Email,
-		"role":  user.Role,
+		"id":            user.ID,
+		"email":         user.Email,
+		"role":          user.Role,
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
 	})
 }
 
@@ -169,23 +169,26 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	secure := h.Cfg.Env != "development"
-	auth.SetTokenCookies(w, accessToken, refreshToken, secure)
+	// Set refresh token as HttpOnly cookie (industry standard for security)
+	// Access token is returned in response body for client to store in memory
+	auth.SetRefreshTokenCookie(w, refreshToken, h.Cfg.Env == "production")
 
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"id":    user.ID,
-		"email": user.Email,
-		"role":  user.Role,
+		"id":           user.ID,
+		"email":        user.Email,
+		"role":         user.Role,
+		"access_token": accessToken,
 	})
 }
 
-// Logout clears the JWT cookies.
+// Logout clears the refresh token cookie and returns a success message.
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
-	auth.ClearTokenCookies(w)
+	auth.ClearRefreshTokenCookie(w)
 	writeJSON(w, http.StatusOK, map[string]string{"message": "logged out"})
 }
 
-// Refresh validates the refresh token and issues new access/refresh tokens.
+// Refresh validates the refresh token cookie and issues new access/refresh tokens.
+// The refresh token is read from an HttpOnly cookie (CSRF-safe).
 func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
@@ -232,10 +235,16 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	secure := h.Cfg.Env != "development"
-	auth.SetTokenCookies(w, accessToken, refreshToken, secure)
+	// Rotate refresh token cookie (security best practice)
+	auth.SetRefreshTokenCookie(w, refreshToken, h.Cfg.Env == "production")
 
-	writeJSON(w, http.StatusOK, map[string]string{"message": "tokens refreshed"})
+	// Return only access token in body (refresh token is in cookie)
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"id":           user.ID,
+		"email":        user.Email,
+		"role":         user.Role,
+		"access_token": accessToken,
+	})
 }
 
 // Me returns the current authenticated user's information.

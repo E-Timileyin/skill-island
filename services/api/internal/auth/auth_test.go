@@ -111,65 +111,55 @@ func TestValidateRefreshToken_WrongSecret(t *testing.T) {
 	}
 }
 
-func TestSetTokenCookies(t *testing.T) {
+func TestSetRefreshTokenCookie(t *testing.T) {
 	w := httptest.NewRecorder()
-	auth.SetTokenCookies(w, "access-val", "refresh-val", true)
+	auth.SetRefreshTokenCookie(w, "refresh-val", true)
 
 	cookies := w.Result().Cookies()
-	if len(cookies) != 2 {
-		t.Fatalf("expected 2 cookies, got %d", len(cookies))
+	if len(cookies) != 1 {
+		t.Fatalf("expected 1 cookie, got %d", len(cookies))
 	}
 
-	var access, refresh *http.Cookie
-	for _, c := range cookies {
-		switch c.Name {
-		case "access_token":
-			access = c
-		case "refresh_token":
-			refresh = c
-		}
+	refresh := cookies[0]
+	if refresh.Name != "refresh_token" {
+		t.Fatalf("expected cookie name 'refresh_token', got %s", refresh.Name)
 	}
-
-	if access == nil {
-		t.Fatal("missing access_token cookie")
+	if refresh.Value != "refresh-val" {
+		t.Fatalf("expected refresh_token value 'refresh-val', got %s", refresh.Value)
 	}
-	if access.Value != "access-val" {
-		t.Fatalf("expected access_token value 'access-val', got %s", access.Value)
+	if !refresh.HttpOnly {
+		t.Fatal("refresh_token should be HttpOnly")
 	}
-	if !access.HttpOnly {
-		t.Fatal("access_token should be HttpOnly")
-	}
-	if !access.Secure {
-		t.Fatal("access_token should be Secure")
-	}
-	if access.SameSite != http.SameSiteStrictMode {
-		t.Fatal("access_token should be SameSite=Strict")
-	}
-	if access.MaxAge != 3600 {
-		t.Fatalf("expected access_token MaxAge 3600, got %d", access.MaxAge)
-	}
-
-	if refresh == nil {
-		t.Fatal("missing refresh_token cookie")
+	if !refresh.Secure {
+		t.Fatal("refresh_token should be Secure")
 	}
 	if refresh.Path != "/api/auth/refresh" {
 		t.Fatalf("expected refresh_token path /api/auth/refresh, got %s", refresh.Path)
 	}
-}
-
-func TestClearTokenCookies(t *testing.T) {
-	w := httptest.NewRecorder()
-	auth.ClearTokenCookies(w)
-
-	cookies := w.Result().Cookies()
-	for _, c := range cookies {
-		if c.MaxAge != -1 {
-			t.Fatalf("expected MaxAge -1 for cookie %s, got %d", c.Name, c.MaxAge)
-		}
+	if refresh.MaxAge != 7*24*3600 {
+		t.Fatalf("expected refresh_token MaxAge %d, got %d", 7*24*3600, refresh.MaxAge)
 	}
 }
 
-func TestMiddleware_NoCookie(t *testing.T) {
+func TestClearRefreshTokenCookie(t *testing.T) {
+	w := httptest.NewRecorder()
+	auth.ClearRefreshTokenCookie(w)
+
+	cookies := w.Result().Cookies()
+	if len(cookies) != 1 {
+		t.Fatalf("expected 1 cookie, got %d", len(cookies))
+	}
+
+	c := cookies[0]
+	if c.Name != "refresh_token" {
+		t.Fatalf("expected cookie name 'refresh_token', got %s", c.Name)
+	}
+	if c.MaxAge != -1 {
+		t.Fatalf("expected MaxAge -1, got %d", c.MaxAge)
+	}
+}
+
+func TestMiddleware_NoAuthHeader(t *testing.T) {
 	mw := auth.Middleware(testSecret)
 	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("handler should not be called")
@@ -191,7 +181,7 @@ func TestMiddleware_InvalidToken(t *testing.T) {
 	}))
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: "invalid-token"})
+	req.Header.Set("Authorization", "Bearer invalid-token")
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
@@ -214,7 +204,7 @@ func TestMiddleware_ValidToken(t *testing.T) {
 	}))
 
 	req := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 

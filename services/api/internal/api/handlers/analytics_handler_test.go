@@ -29,7 +29,7 @@ func TestAnalyticsOverview_StudentRole(t *testing.T) {
 	token, _ := auth.GenerateAccessToken("user-1", "student", "profile-1", h.Cfg.JWTSecret)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/analytics/overview", nil)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.AnalyticsOverview))
@@ -54,7 +54,7 @@ func TestAnalyticsOverview_ParentRole_MissingProfileID(t *testing.T) {
 	token, _ := auth.GenerateAccessToken("user-1", "parent", "", h.Cfg.JWTSecret)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/analytics/overview", nil)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.AnalyticsOverview))
@@ -79,7 +79,7 @@ func TestAnalyticsOverview_EducatorRole_MissingProfileID(t *testing.T) {
 	token, _ := auth.GenerateAccessToken("user-1", "educator", "", h.Cfg.JWTSecret)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/analytics/overview", nil)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.AnalyticsOverview))

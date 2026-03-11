@@ -32,17 +32,42 @@ export interface WeeklySummary {
   message?: string;
 }
 
+// Global access token getter - will be set by auth store
+let getAccessToken: (() => string | null) | null = null;
+let refreshTokensCallback: (() => Promise<boolean>) | null = null;
+
+export function setAuthCallbacks(
+  getAccessTokenFn: () => string | null,
+  refreshTokensFn: () => Promise<boolean>
+) {
+  getAccessToken = getAccessTokenFn;
+  refreshTokensCallback = refreshTokensFn;
+}
+
+interface RequestOptions extends RequestInit {
+  _isRetry?: boolean;
+  _skipAuth?: boolean;
+}
+
 async function request<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestOptions = {}
 ): Promise<T> {
+  const { _isRetry, _skipAuth, ...fetchOptions } = options;
+  const accessToken = getAccessToken?.();
+  
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(fetchOptions.headers as Record<string, string>),
+  };
+  
+  if (accessToken && !_skipAuth) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+
   const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    ...fetchOptions,
+    headers,
   });
 
   let data;
@@ -53,6 +78,19 @@ async function request<T>(
   }
 
   if (!res.ok) {
+    // If 401 and we have a refresh callback, try to refresh and retry once
+    if (res.status === 401 && refreshTokensCallback && !_isRetry) {
+      const refreshed = await refreshTokensCallback();
+      if (refreshed) {
+        const newToken = getAccessToken?.();
+        if (newToken) {
+          return request<T>(path, {
+            ...options,
+            _isRetry: true,
+          });
+        }
+      }
+    }
     // Backend always returns { code, message } for errors.
     throw data && data.message
       ? { code: data.code || "UNKNOWN", message: data.message }
@@ -61,10 +99,21 @@ async function request<T>(
   return data;
 }
 
-export async function login(email: string, password: string): Promise<void> {
-  await request<void>("/api/auth/login", {
+// Login function - returns both tokens (no auth header needed)
+export async function login(email: string, password: string): Promise<{ id: string; email: string; role: string; access_token: string; refresh_token: string }> {
+  return await request<{ id: string; email: string; role: string; access_token: string; refresh_token: string }>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+    _skipAuth: true,
+  });
+}
+
+// Refresh token function (no auth header needed - uses refresh token in body)
+export async function refreshToken(refreshTokenValue: string): Promise<{ access_token: string; refresh_token: string }> {
+  return await request<{ access_token: string; refresh_token: string }>("/api/auth/refresh", {
+    method: "POST",
+    body: JSON.stringify({ refresh_token: refreshTokenValue }),
+    _skipAuth: true,
   });
 }
 
@@ -79,8 +128,22 @@ export function register(
   });
 }
 
-export function getMe(): Promise<User> {
-  return request<User>("/api/auth/me");
+export async function getMe(): Promise<User | null> {
+  try {
+    const data = await request<any>("/api/auth/me");
+    // Handle both `{...fields}` or `{ user: { ...fields } }`
+    if (data && typeof data === "object") {
+      if ("role" in data) {
+        return data as User;
+      }
+      if ("user" in data && typeof data.user === "object" && "role" in data.user) {
+        return data.user as User;
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
 }
 
 export interface SessionPayload {

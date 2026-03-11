@@ -13,7 +13,7 @@ export default function Home() {
           alt="Skill Island Logo"
           width={600}
           height={200}
-          className="object-contain drop-shadow-lg"
+        className="object-contain drop-shadow-lg"
           priority
         />
       </div>

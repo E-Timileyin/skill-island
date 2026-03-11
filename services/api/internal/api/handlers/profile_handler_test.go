@@ -43,7 +43,7 @@ func TestCreateProfile_NonStudentRole(t *testing.T) {
 	// Use real middleware to inject parent claims
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-456", "parent", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.CreateProfile))
 
 	handler.ServeHTTP(w, req)
@@ -67,7 +67,7 @@ func TestCreateProfile_InvalidBody(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-123", "student", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.CreateProfile))
 
 	handler.ServeHTTP(w, req)
@@ -89,7 +89,7 @@ func TestCreateProfile_MissingNickname(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-123", "student", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.CreateProfile))
 
 	handler.ServeHTTP(w, req)
@@ -118,7 +118,7 @@ func TestCreateProfile_InvalidPlayMode(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-123", "student", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.CreateProfile))
 
 	handler.ServeHTTP(w, req)
@@ -155,7 +155,7 @@ func TestGetProfile_NonStudentRole(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-456", "educator", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.GetProfile))
 
 	handler.ServeHTTP(w, req)
@@ -189,7 +189,7 @@ func TestUpdateProfile_InvalidBody(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-123", "student", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.UpdateProfile))
 
 	handler.ServeHTTP(w, req)
@@ -211,7 +211,7 @@ func TestUpdateProfile_EmptyNickname(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-123", "student", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.UpdateProfile))
 
 	handler.ServeHTTP(w, req)
@@ -238,7 +238,7 @@ func TestUpdateProfile_InvalidPlayMode(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-123", "student", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.UpdateProfile))
 
 	handler.ServeHTTP(w, req)
@@ -263,7 +263,7 @@ func TestUpdateProfile_NoFields(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-123", "student", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(h.UpdateProfile))
 
 	handler.ServeHTTP(w, req)
@@ -295,7 +295,7 @@ func TestCreateProfile_DefaultPlayMode(t *testing.T) {
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	token, _ := auth.GenerateAccessToken("user-123", "student", "", h.Cfg.JWTSecret)
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 	handler := mw(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {

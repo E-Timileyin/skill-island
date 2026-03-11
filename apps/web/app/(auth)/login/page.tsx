@@ -1,18 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/api";
+import { useAuthStore } from "@/hooks/useAuthStore";
+import { setAuthCallbacks } from "@/lib/api";
 import logo from "@/public/assets/logo.png";
 import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, loginUser, accessToken } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isStartHovered, setIsStartHovered] = useState(false);
+
+  // Set up auth callbacks for API client
+  useEffect(() => {
+    setAuthCallbacks(
+      () => useAuthStore.getState().accessToken,
+      () => useAuthStore.getState().refreshTokens()
+    );
+  }, []);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && accessToken) {
+      if (user.role === "student") {
+        router.push("/island");
+      } else {
+        router.push("/overview");
+      }
+    }
+  }, [user, accessToken, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -20,26 +41,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
-      // Now fetch user info using /api/auth/me
-      const user = await import("@/lib/api").then(api => api.getMe());
-      console.log("User after login:", user);
-      if (user.role === "student") {
-        router.push("/island");
-        console.log("routing based on user role:", user.role);
-      } else {
-        router.push("/overview");
-        console.log("routing to the ");
-      }
+      await loginUser(email, password);
+      // Navigation will happen via the useEffect above when user state updates
     } catch (err: unknown) {
       const apiErr = err as { message?: string };
-
-      if (apiErr.message){
-        setError(apiErr.message || "Login failed"); 
-        console.error("Unknown error during login:", err);
-      } else{
-        setError(apiErr.message || "Login failed. Please check your credentials or try again.");
-      }
+      setError(apiErr.message || "Login failed. Please check your credentials or try again.");
+      console.error("Unknown error during login:", err);
+    } finally {
+      setLoading(false);
     }
   }
 

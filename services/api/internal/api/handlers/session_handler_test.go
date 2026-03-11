@@ -57,7 +57,7 @@ func TestSubmitSession_NonStudentRole(t *testing.T) {
 		"duration_ms": 60000,
 	})
 	req := httptest.NewRequest(http.MethodPost, "/api/sessions", bytes.NewReader(body))
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.SubmitSession))
@@ -83,7 +83,7 @@ func TestSubmitSession_NoProfile(t *testing.T) {
 		"duration_ms": 60000,
 	})
 	req := httptest.NewRequest(http.MethodPost, "/api/sessions", bytes.NewReader(body))
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.SubmitSession))
@@ -102,7 +102,7 @@ func TestSubmitSession_InvalidBody(t *testing.T) {
 	token, _ := auth.GenerateAccessToken("user-1", "student", "profile-1", h.Cfg.JWTSecret)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/sessions", bytes.NewReader([]byte("not json")))
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.SubmitSession))
@@ -127,7 +127,7 @@ func TestSubmitSession_InvalidGameType(t *testing.T) {
 		"duration_ms": 60000,
 	})
 	req := httptest.NewRequest(http.MethodPost, "/api/sessions", bytes.NewReader(body))
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.SubmitSession))
@@ -158,7 +158,7 @@ func TestSubmitSession_InvalidMode(t *testing.T) {
 		"duration_ms": 60000,
 	})
 	req := httptest.NewRequest(http.MethodPost, "/api/sessions", bytes.NewReader(body))
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.SubmitSession))
@@ -185,7 +185,7 @@ func TestSubmitSession_InvalidDuration(t *testing.T) {
 		"duration_ms": 0,
 	})
 	req := httptest.NewRequest(http.MethodPost, "/api/sessions", bytes.NewReader(body))
-	req.AddCookie(&http.Cookie{Name: "access_token", Value: token})
+	req.Header.Set("Authorization", "Bearer "+token)
 
 	mw := auth.Middleware(h.Cfg.JWTSecret)
 	handler := mw(http.HandlerFunc(h.SubmitSession))

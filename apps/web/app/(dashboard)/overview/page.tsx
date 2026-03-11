@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { Download, Star, CheckCircle2, Flag, PieChart, Search, Users, BarChart3, ClipboardList, X, Clock, Zap, Target, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useAuth } from "@/hooks/useAuth";
-import { getAnalyticsOverview, type WeeklySummary, logout } from "@/lib/api";
+import { useAuthStore } from "@/hooks/useAuthStore";
+import { setAuthCallbacks } from "@/lib/api";
+import { getAnalyticsOverview, type WeeklySummary } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 const SkillCard = ({ 
@@ -56,14 +57,34 @@ const SkillCard = ({
 
 export default function DashboardOverviewPage() {
   const [showAttentionDetails, setShowAttentionDetails] = useState(false);
-  const { user, loading: authLoading } = useAuth();
+  const { user, accessToken, fetchUser, logout } = useAuthStore();
   const [summary, setSummary] = useState<WeeklySummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  // Initialize auth callbacks
   useEffect(() => {
-    if (authLoading || !user) return;
+    setAuthCallbacks(
+      () => useAuthStore.getState().accessToken,
+      () => useAuthStore.getState().refreshTokens()
+    );
+  }, []);
+
+  useEffect(() => {
+    // No access token - redirect to login
+    if (!accessToken) {
+      router.replace("/login");
+      return;
+    }
+
+    // Fetch user if we have token but no user
+    if (accessToken && !user) {
+      fetchUser().catch(() => router.replace("/login"));
+      return;
+    }
+
+    if (!user) return;
 
     const params = new URLSearchParams(window.location.search);
     const profileId = params.get("profile_id");
@@ -79,14 +100,10 @@ export default function DashboardOverviewPage() {
         setError(err?.message || "Failed to load analytics data");
       })
       .finally(() => setIsLoading(false));
-  }, [user, authLoading]);
+  }, [user, accessToken, router, fetchUser]);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch {
-      // Clear cookies even if API call fails
-    }
+    logout();
     router.push("/login");
   };
 
@@ -98,7 +115,7 @@ export default function DashboardOverviewPage() {
     return `${Math.round(value * 100)}%`;
   }
 
-  if (authLoading || isLoading) {
+  if (!accessToken || !user || isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FFF9F0]">
         <p className="text-lg font-bold text-slate-600">Loading dashboard…</p>

@@ -1,7 +1,6 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
-import { logout } from "@/lib/api";
+import { useAuthStore } from "@/hooks/useAuthStore";
 import { useRouter } from "next/navigation";
 
 export default function DashboardLayout({
@@ -9,15 +8,11 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = useAuth();
+  const { logout } = useAuthStore();
   const router = useRouter();
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch {
-      // Clear cookies even if API call fails
-    }
+    logout();
     router.push("/login");
   };
 

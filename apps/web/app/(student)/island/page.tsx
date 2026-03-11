@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/hooks/useAuthStore";
+import { setAuthCallbacks } from "@/lib/api";
 import { getProfile, type Profile } from "@/lib/api";
 import IslandMap from "@/components/game/IslandMap";
 // import bgMemoryCove from "@/public/assets/bg-memory-cove.png";
@@ -33,17 +34,33 @@ function detectNewlyUnlocked(previousXP: number, currentXP: number): Set<string>
 
 export default function IslandPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, accessToken, fetchUser } = useAuthStore();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [newlyUnlocked, setNewlyUnlocked] = useState<Set<string>>(new Set());
 
+  // Initialize auth callbacks
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
+    setAuthCallbacks(
+      () => useAuthStore.getState().accessToken,
+      () => useAuthStore.getState().refreshTokens()
+    );
+  }, []);
+
+  useEffect(() => {
+    // No access token - redirect to login
+    if (!accessToken) {
       router.replace("/login");
       return;
     }
+
+    // Fetch user if we have token but no user
+    if (accessToken && !user) {
+      fetchUser().catch(() => router.replace("/login"));
+      return;
+    }
+
+    if (!user) return;
 
     getProfile()
       .then((p) => {
@@ -69,7 +86,7 @@ export default function IslandPage() {
         }
       })
       .finally(() => setProfileLoading(false));
-  }, [user, authLoading, router]);
+  }, [user, accessToken, router, fetchUser]);
 
   const handleZoneSelect = useCallback(
     (zone: string) => {
@@ -78,7 +95,7 @@ export default function IslandPage() {
     [router]
   );
 
-  if (authLoading || profileLoading) {
+  if (!accessToken || !user || profileLoading) {
     return (
 
       <main className="flex min-h-screen flex-col items-center bg-gradient-to-b from-sky-100 to-blue-50 p-4 font-['Nunito']">

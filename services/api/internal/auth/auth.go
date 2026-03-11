@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -115,73 +116,64 @@ func ValidateRefreshToken(tokenString, secret string) (string, error) {
 	return claims.Subject, nil
 }
 
-// SetTokenCookies writes access and refresh token cookies to the response.
-func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, secure bool) {
+// SetRefreshTokenCookie writes an HttpOnly refresh token cookie.
+// This is the industry standard: refresh token in HttpOnly cookie (auto-sent, CSRF-safe path).
+func SetRefreshTokenCookie(w http.ResponseWriter, refreshToken string, secure bool) {
 	env := os.Getenv("ENV")
-	sameSite := http.SameSiteNoneMode
+	sameSite := http.SameSiteStrictMode
 	if env == "development" || env == "local" {
 		sameSite = http.SameSiteLaxMode
 		secure = false
 	}
-	domain := ""
-	fmt.Printf("[SetTokenCookies] ENV=%s Secure=%v SameSite=%v Domain='%s'\n", env, secure, sameSite, domain)
-	fmt.Printf("[SetTokenCookies] access_token='%s' refresh_token='%s'\n", accessToken, refreshToken)
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    accessToken,
-		HttpOnly: true,
-		Secure:   secure,
-		SameSite: sameSite,
-		Domain:   domain,
-		Path:     "/",
-		MaxAge:   3600, // 1 hour
-	})
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
 		HttpOnly: true,
 		Secure:   secure,
 		SameSite: sameSite,
-		Domain:   domain,
 		Path:     "/api/auth/refresh",
 		MaxAge:   7 * 24 * 3600, // 7 days
 	})
 }
 
-// ClearTokenCookies removes the access and refresh token cookies.
-func ClearTokenCookies(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "access_token",
-		Value:    "",
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
-		MaxAge:   -1,
-	})
+// ClearRefreshTokenCookie removes the refresh token cookie.
+func ClearRefreshTokenCookie(w http.ResponseWriter) {
+	env := os.Getenv("ENV")
+	sameSite := http.SameSiteStrictMode
+	if env == "development" || env == "local" {
+		sameSite = http.SameSiteLaxMode
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: sameSite,
 		Path:     "/api/auth/refresh",
 		MaxAge:   -1,
 	})
 }
 
-// Middleware returns an HTTP middleware that validates the access token cookie
-// and adds claims to the request context.
+// Middleware returns an HTTP middleware that validates the access token from
+// the Authorization header (Bearer token) and adds claims to the request context.
 func Middleware(secret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cookie, err := r.Cookie("access_token")
-			if err != nil {
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
 				http.Error(w, `{"code":"UNAUTHORIZED","message":"missing access token"}`, http.StatusUnauthorized)
 				return
 			}
 
-			claims, err := ValidateAccessToken(cookie.Value, secret)
+			// Extract Bearer token
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+				http.Error(w, `{"code":"UNAUTHORIZED","message":"invalid authorization header format"}`, http.StatusUnauthorized)
+				return
+			}
+
+			tokenString := parts[1]
+			claims, err := ValidateAccessToken(tokenString, secret)
 			if err != nil {
 				http.Error(w, `{"code":"UNAUTHORIZED","message":"invalid or expired token"}`, http.StatusUnauthorized)
 				return
