@@ -4,10 +4,27 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+// getCookieDomain returns the cookie domain based on environment.
+func getCookieDomain() string {
+	env := os.Getenv("ENV")
+	if env == "development" || env == "local" {
+		fmt.Println("Cookie domain for local dev: ''")
+		return "" // No domain for local dev
+	}
+	domain := os.Getenv("COOKIE_DOMAIN")
+	if domain != "" {
+		fmt.Printf("Cookie domain from env: %s\n", domain)
+		return domain
+	}
+	fmt.Println("Cookie domain default: skill-island.vercel.app")
+	return "skill-island.vercel.app" // Default production domain
+}
 
 // Claims represents the JWT claims for both access and refresh tokens.
 type Claims struct {
@@ -100,13 +117,22 @@ func ValidateRefreshToken(tokenString, secret string) (string, error) {
 
 // SetTokenCookies writes access and refresh token cookies to the response.
 func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, secure bool) {
+	env := os.Getenv("ENV")
+	sameSite := http.SameSiteNoneMode
+	if env == "development" || env == "local" {
+		sameSite = http.SameSiteLaxMode
+		secure = false
+	}
+	domain := getCookieDomain()
+	fmt.Printf("[SetTokenCookies] ENV=%s Secure=%v SameSite=%v Domain='%s'\n", env, secure, sameSite, domain)
+	fmt.Printf("[SetTokenCookies] access_token='%s' refresh_token='%s'\n", accessToken, refreshToken)
 	http.SetCookie(w, &http.Cookie{
 		Name:     "access_token",
 		Value:    accessToken,
 		HttpOnly: true,
-		Secure:   secure,
-		SameSite: http.SameSiteNoneMode,
-		Domain:   "skill-island.vercel.app",
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		Domain:   "",
 		Path:     "/",
 		MaxAge:   3600, // 1 hour
 	})
@@ -114,9 +140,9 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, se
 		Name:     "refresh_token",
 		Value:    refreshToken,
 		HttpOnly: true,
-		Secure:   secure,
-		SameSite: http.SameSiteNoneMode,
-		Domain:   "skill-island.vercel.app",
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+		Domain:   "",
 		Path:     "/api/auth/refresh",
 		MaxAge:   7 * 24 * 3600, // 7 days
 	})

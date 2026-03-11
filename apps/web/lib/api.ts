@@ -45,19 +45,24 @@ async function request<T>(
     },
   });
 
-  if (!res.ok) {
-    const error: APIError = await res.json().catch(() => ({
-      code: "UNKNOWN",
-      message: res.statusText,
-    }));
-    throw error;
+  let data;
+  try {
+    data = await res.json();
+  } catch (error) {
+     throw { code: "UNKNOWN", message: "Malformed response from server." };
   }
 
-  return res.json();
+  if (!res.ok) {
+    // Backend always returns { code, message } for errors.
+    throw data && data.message
+      ? { code: data.code || "UNKNOWN", message: data.message }
+      : { code: "UNKNOWN", message: res.statusText };
+  }
+  return data;
 }
 
-export function login(email: string, password: string): Promise<User> {
-  return request<User>("/api/auth/login", {
+export async function login(email: string, password: string): Promise<void> {
+  await request<void>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });

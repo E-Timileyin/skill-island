@@ -20,17 +20,26 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const user = await login(email, password);
+      await login(email, password);
+      // Now fetch user info using /api/auth/me
+      const user = await import("@/lib/api").then(api => api.getMe());
+      console.log("User after login:", user);
       if (user.role === "student") {
         router.push("/island");
+        console.log("routing based on user role:", user.role);
       } else {
         router.push("/overview");
+        console.log("routing to the ");
       }
     } catch (err: unknown) {
       const apiErr = err as { message?: string };
-      setError(apiErr.message || "Login failed");
-    } finally {
-      setLoading(false);
+
+      if (apiErr.message){
+        setError(apiErr.message || "Login failed"); 
+        console.error("Unknown error during login:", err);
+      } else{
+        setError(apiErr.message || "Login failed. Please check your credentials or try again.");
+      }
     }
   }
 

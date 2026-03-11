@@ -33,6 +33,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Register: email=%s password=%s role=%s", req.Email, req.Password, req.Role)
+
 	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
 
 	if req.Email == "" || req.Password == "" || req.Role == "" {
@@ -58,6 +60,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Register: password hash=%s", string(hash))
+
 	user, err := db.CreateUser(r.Context(), h.DB, req.Email, string(hash), req.Role)
 	if err != nil {
 		if errors.Is(err, db.ErrDuplicateEmail) {
@@ -68,6 +72,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, APIError{Code: "INTERNAL_ERROR", Message: "failed to create user"})
 		return
 	}
+
+	log.Printf("Register: user created id=%s email=%s role=%s hash=%s", user.ID, user.Email, user.Role, user.PasswordHash)
 
 	profileID := ""
 	if user.Role == "student" {
@@ -94,7 +100,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	secure := h.Cfg.Env != "development"
 	auth.SetTokenCookies(w, accessToken, refreshToken, secure)
 
-	writeJSON(w, http.StatusCreated, map[string]interface{}{
+	writeJSON(w, http.StatusOK, map[string]interface{}{
 		"id":    user.ID,
 		"email": user.Email,
 		"role":  user.Role,
@@ -108,6 +114,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, APIError{Code: "BAD_REQUEST", Message: "invalid request body"})
 		return
 	}
+
+	log.Printf("Login: email=%s password=%s", req.Email, req.Password)
 
 	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
 
@@ -127,7 +135,10 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Login: user found id=%s email=%s role=%s hash=%s", user.ID, user.Email, user.Role, user.PasswordHash)
+
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		log.Printf("Login: bcrypt compare error: %v", err)
 		writeJSON(w, http.StatusUnauthorized, APIError{Code: "INVALID_CREDENTIALS", Message: "invalid email or password"})
 		return
 	}
