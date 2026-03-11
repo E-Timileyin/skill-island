@@ -123,7 +123,7 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, se
 		sameSite = http.SameSiteLaxMode
 		secure = false
 	}
-	domain := getCookieDomain()
+	domain := ""
 	fmt.Printf("[SetTokenCookies] ENV=%s Secure=%v SameSite=%v Domain='%s'\n", env, secure, sameSite, domain)
 	fmt.Printf("[SetTokenCookies] access_token='%s' refresh_token='%s'\n", accessToken, refreshToken)
 	http.SetCookie(w, &http.Cookie{
