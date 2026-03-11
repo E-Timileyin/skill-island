@@ -130,9 +130,9 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, se
 		Name:     "access_token",
 		Value:    accessToken,
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
-		Domain:   "",
+		Secure:   secure,
+		SameSite: sameSite,
+		Domain:   domain,
 		Path:     "/",
 		MaxAge:   3600, // 1 hour
 	})
@@ -140,9 +140,9 @@ func SetTokenCookies(w http.ResponseWriter, accessToken, refreshToken string, se
 		Name:     "refresh_token",
 		Value:    refreshToken,
 		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
-		Domain:   "",
+		Secure:   secure,
+		SameSite: sameSite,
+		Domain:   domain,
 		Path:     "/api/auth/refresh",
 		MaxAge:   7 * 24 * 3600, // 7 days
 	})
